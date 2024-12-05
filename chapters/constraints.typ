@@ -31,9 +31,11 @@ The syntax of constraints is as follows
   | &clet x : sigma cin C 
   $),
 
+  syntax-rule(name: [Ambivalent variables], $zeta$),
+
   syntax-rule(name: [Shallow Types], $psi ::= alpha | overline(zeta) tformer$), 
 
-  syntax-rule(name: [Constrainted\ Type Scheme], $sigma ::= forall overline(alpha), overline(zeta). C => zeta $), 
+  syntax-rule(name: [Constrained\ Type Scheme], $sigma ::= forall overline(alpha), overline(zeta). C => zeta $), 
 
   syntax-rule(name: [Assumptions], $A ::= ctrue | A and A | tau = tau$),
 
