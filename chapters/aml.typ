@@ -449,19 +449,55 @@ $
 $
 
 
-#judgement-box($Gamma tack rho <= alpha$, $Gamma tack sigma_1 <= sigma_2$)
+#judgement-box($Gamma tack psi_epsilon <= psi_epsilon^'$, $Gamma tack psi_epsilon <= alpha$, $Gamma tack sigma <= sigma'$)
+
 
 
 $
   #proof-tree(
     rule(
-      $Gamma tack rho <= alpha$,
-      $alpha >= psi in Gamma$,
-      $rho in psi$
+      $Gamma tack epsilon <= psi_epsilon$,
+      $$
+    )
+  )
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Gamma tack psi approx alpha <= psi' approx alpha$,
+      $Gamma tack psi <= psi'$
     )
   )
 
   #h1
+
+  #proof-tree(
+    rule(
+      $Gamma tack rho <= psi$,
+      $rho in psi$
+    )
+  )
+  #v2
+
+  #proof-tree(
+    rule(
+      $Gamma tack alpha <= alpha$,
+      $$
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Gamma tack psi_epsilon <= alpha$,
+      $Gamma tack psi_epsilon <= psi_epsilon^'$,
+      $alpha >= psi_epsilon^' in Gamma$
+    )
+  )
+
+
+  #v2
 
   #proof-tree(
     rule(
@@ -477,8 +513,7 @@ $
     rule(
       $Gamma tack (tforallb(alpha, psi_epsilon) sigma) <= sigma'$,
       $Gamma tack sigma[alpha := beta] <= sigma'$,
-      $beta >= psi' in Gamma$,
-      $psi_epsilon subset.eq psi'$
+      $Gamma tack psi_epsilon <= beta$
     )
   )
 $
