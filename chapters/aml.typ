@@ -47,7 +47,7 @@ _Types_. The syntax of types is as follows:
   syntax-rule(name: [Shallow Types], $rho ::= alpha | overline(alpha) tformer$),
   syntax-rule(name: [Ambivalent Types], $psi ::= rho | psi approx alpha$),
   syntax-rule(name: [Ambivalent Bound], $psi_epsilon ::= psi | epsilon$),
-  syntax-rule(name: [Type Schemes], $sigma ::= alpha | forall (alpha >= psi_epsilon). sigma$),
+  syntax-rule(name: [Type Schemes], $sigma ::= alpha | tforallb(alpha, psi_epsilon) sigma$),
   syntax-rule(name: [Contexts], $Gamma ::= &dot | Gamma, alpha >= psi_epsilon | Gamma, tau = tau | Gamma, x: sigma$),
 )
 
@@ -59,7 +59,7 @@ Intuiviely, ambivalent types are a set of (provably equivalent) types. We use $a
 However, the syntax of ambivalent types is doesn't immediately correspond to the intuition. The reason behind this is to address the following challenge: when inferring types, we wish to track information such as the usage of type-level equalities. This information must be _shared_ across all uses of a type to correctly detect ambivalence when exiting the scope of a local constraint introduced by a $ematch$. We represent this explicit sharing of types using type variables ($alpha$). A context $Gamma$ can contain the 'structure' of the type ($alpha >= psi_epsilon in Gamma$).
 
 // Schemes
-_Type schemes_ are also affected by the notion of _sharing_. Instead of a normal quantifier ($forall alpha. sigma$), we introduce a _flexible bounded quantifier_ ($alpha >= psi_epsilon$). This is because on instantiation, _any_ type can be made ambivalent (provided it is consistent in the context), thus the type $psi$ represents a _lower bound_. We write $forall alpha. sigma$ for $forall (alpha >= epsilon). sigma$. 
+_Type schemes_ are also affected by the notion of _sharing_. Instead of a normal quantifier ($tforall(alpha) sigma$), we introduce a _flexible bounded quantifier_ ($alpha >= psi_epsilon$). This is because on instantiation, _any_ type can be made ambivalent (provided it is consistent in the context), thus the type $psi$ represents a _lower bound_. We write $tforall(alpha) sigma$ for $tforallb(alpha, epsilon) sigma$.
 
 // Contexts
 Contexts bind program variables to type schemes, introduce _variable bounds_, and store type equations $tau = tau'$.
@@ -90,7 +90,7 @@ grid(
     fv_rho (overline(alpha) tformer) &= { overline(alpha) } \ 
     #v1
     fv_sigma (alpha) &= { alpha } \ 
-    fv_sigma (forall (alpha >= psi_epsilon). sigma) &= fv(sigma) \\ {alpha} union fv_(psi_epsilon)(psi_epsilon) \ \
+    fv_sigma (tforallb(alpha, psi_epsilon) sigma) &= fv(sigma) \\ {alpha} union fv_(psi_epsilon)(psi_epsilon) \ \
     #v1
     fv_(psi_epsilon) (psi) &= fv_psi (psi) 
   $
@@ -170,7 +170,7 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack forall (alpha >= psi_epsilon). sigma$,
+      $Gamma tack tforallb(alpha, psi_epsilon) sigma$,
       $Gamma, alpha >= psi tack sigma ok$,
       $Gamma tack psi_epsilon ok$,
       $alpha \# Gamma$
@@ -348,7 +348,7 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack efun x -> e : forall alpha >= beta_1 -> beta_2. alpha$,
+      $Gamma tack efun x -> e : tforallb(alpha, beta_1 -> beta_2) alpha$,
       $Gamma, x : beta_1 tack e : beta_2$,
       $Gamma tack beta_1 ok$
     )
@@ -370,7 +370,7 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack e : forall (alpha >= psi_epsilon). sigma$,
+      $Gamma tack e : tforallb(alpha, psi_epsilon) sigma$,
       $Gamma, alpha >= psi_epsilon tack e : sigma$,
       $Gamma tack psi_epsilon ok$,
       $alpha\#Gamma$
@@ -393,7 +393,7 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack efun (etype alpha) -> e : forall alpha. sigma$,
+      $Gamma tack efun (etype alpha) -> e : tforall(alpha) sigma$,
       $Gamma, alpha tack e : sigma$,
       $alpha \# Gamma$
     )
@@ -422,7 +422,7 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack erefl : forall alpha, beta >= alpha = alpha. beta$,
+      $Gamma tack erefl : tforall((alpha, beta >= alpha = alpha)) beta$,
       $$
     )
   )
@@ -475,7 +475,7 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack forall alpha >= psi_epsilon. sigma <= sigma'$,
+      $Gamma tack (tforallb(alpha, psi_epsilon) sigma) <= sigma'$,
       $Gamma tack sigma[alpha := beta] <= sigma'$,
       $beta >= psi' in Gamma$,
       $psi_epsilon subset.eq psi'$
