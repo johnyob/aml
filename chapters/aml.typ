@@ -483,6 +483,26 @@ $
   )
 $
 
+_Examples_ of annotation types:
+$
+  floor(tint) & "is" &
+  & beta >= tint triangle.r.small beta
+  \
+  forall floor(tint -> tint) & "is" &
+  & tforall((beta_1 >= tint, beta_2 >= tint)) beta_1 -> beta_2
+  \
+  floor(alpha -> tint) & "is" &
+  & beta >= alpha, gamma >= tint, delta >= beta -> gamma triangle.r.small delta
+  \
+  forall floor((alpha -> tint) -> (alpha -> tint)) & "is" &
+  & tforall(lr((
+     #block[$
+     beta_1 >= alpha, gamma_1 >= tint, delta_1 >= beta_1 -> gamma_1, \
+     beta_2 >= alpha, gamma_2 >= tint, delta_2 >= beta_2 -> gamma_2
+     $]
+   ))) delta_1 -> delta_2
+$
+
 _Coherence_. An ambivalent type must be _coherent_, namely all the types in the ambivalent type are provably equal under the equations available in the context $Gamma$.
 
 #definition[An ambivalent type $psi$ is said to be coherent in the context $Gamma$ if and only if $Gamma tack psi ok$]
