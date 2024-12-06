@@ -511,14 +511,14 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack (tforallb(alpha, psi_epsilon) sigma) <= sigma'$,
+      $Gamma tack tforallb(alpha, psi_epsilon) sigma <= sigma'$,
       $Gamma tack sigma[alpha := beta] <= sigma'$,
       $Gamma tack psi_epsilon <= beta$
     )
   )
 $
 
-_Examples_ of annotation types:
+_Examples_ of annotation types.
 $
   floor(tint) & "is" &
   & beta >= tint triangle.r.small beta
@@ -533,10 +533,58 @@ $
   & tforall(lr((
      #block[$
      beta_1 >= alpha, gamma_1 >= tint, delta_1 >= beta_1 -> gamma_1, \
-     beta_2 >= alpha, gamma_2 >= tint, delta_2 >= beta_2 -> gamma_2
+     beta_2 >= alpha, gamma_2 >= tint, delta_2 >= beta_2 -> gamma_2, \ 
+     eta >= delta_1 -> delta_2
      $]
-   ))) delta_1 -> delta_2
+   ))) eta
 $
+
+_Examples_ of subsumption.
+With $Delta = beta'_1 >= tint approx alpha, gamma'_1 >= tint approx alpha, delta'_1 >= beta'_1 -> gamma'_1, beta'_2 >= alpha, gamma'_2 >= tint, delta'_2 >= beta'_2 -> gamma'_2, eta' >= delta'_1 -> delta'_2$
+$
+  
+  #proof-tree(
+    rule(
+      $underbrace(alpha\, alpha = tint\, Delta', Gamma) tack forall floor((alpha -> tint) -> (alpha -> tint)) <= eta$, 
+      rule(
+        $Gamma tack forall ( gamma_1 >= tint, ...). eta$,
+        rule(
+          $Gamma tack forall (delta_1 >= beta'_1 -> gamma'_1, ...). eta$, 
+          
+          rule($Gamma tack forall(beta_1 >= alpha, ...). eta$, $dots.v$), 
+          rule(
+            $Gamma tack beta'_1 -> gamma'_1 <= delta'_1$, 
+            $dots.v$
+          )
+        ), 
+        rule(
+          $Gamma tack tint <= gamma'_1$,
+          rule($Gamma tack tint <= tint approx alpha$, $dots.v$), 
+          $gamma'_1 >= tint approx alpha in Gamma$
+        )
+      ), 
+      rule(
+        $Gamma tack alpha <= beta'_1$, 
+        rule($Gamma tack alpha <= tint approx alpha$, $dots.v$),
+        $beta'_1 >= tint approx alpha in Gamma$
+      )
+    )
+  )
+$
+
+The above instantiation would be utilised in the following code example:
+$
+  elet "foo" = &efun (etype alpha) med (w : alpha = tint) -> \
+  &ematch (w : alpha = tint) ewith erefl -> \ 
+  & ((efun (x : alpha) -> x) : alpha -> tint)
+$
+where $efun (x : tau) -> e$ is syntactic sugar for $efun x -> elet x = (x : tau) ein e$. 
+The function $efun (x : alpha) -> x$ would have the type 
+$alpha -> alpha approx tint$ (sharing removed for readability). 
+
+#comment[TODO: Do example with ambivalent coerce instantiation]. 
+
+
 
 _Coherence_. An ambivalent type must be _coherent_, namely all the types in the ambivalent type are provably equal under the equations available in the context $Gamma$.
 
