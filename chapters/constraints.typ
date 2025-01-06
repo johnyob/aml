@@ -5,195 +5,61 @@
 #import "@preview/curryst:0.3.0": rule, proof-tree
 
 
+#let aml = textsf("AML")
 #let cdef = textsf("def")
 #let cin = textsf("in")
 #let ctrue = textsf("true")
 #let cfalse = textsf("false")
 #let clet = textsf("let")
 #let cis = textsf("is")
+#let ok = textsf("ok")
+#let consistent = textsf("consistent")
 
 #let var = textsf("Var")
 #let tformer = textsf("F")
 
 #let gt = math.upright(math.bold("t"))
-#let gz = math.upright(math.bold("z"))
 #let gs = math.upright(math.bold("s"))
 
-#comment([This section describes Olivier's semantics (with some minor syntactic changes)])
+In this section, we define the constraint language. Following Pottier and Remy [??], our constraint language uses both expression variables and type variables. 
 
-The syntax of constraints is as follows
+The syntax is given below. For composition we have $ctrue$, the trivially true constraint, and conjunction $C_1 and C_2$. 
+The equality constraint $alpha = beta$ asserts that the types $alpha$ and $beta$ are equivalent. The _sub_ constraint $psi subset.eq alpha$ asserts that $alpha$ 'contains' the structure of the type $psi$, the definition of 'contains' is somewhat involved (and thus covered later in the section [??]). The existential constraint $exists alpha. C$ that binds the _flexible_ ($circle.small.filled$) type variable $alpha$ in $C$. The universal constraint $forall alpha. C$ that binds the _rigid_ ($star$) type variable $alpha$ in C. 
+The _implication_ constraint $A ==> C$ that assumes the assumptions $A$ hold in $C$. The instance constraint $x <= alpha$ (and substitued form $sigma <= alpha$) asserts that the scheme of $x$ can be instantiated to the type $alpha$. The definition and let constraints $cdef x : sigma cin C$ and $clet x : sigma cin C$ bind the scheme $sigma$ to $x$ in $C$, with the $clet$ constraint additionally asserting that $sigma$ has one or more instances. 
 
+Constraints equivalent modulo alpha-renaming of all binders, of both type and expression variables.
 #syntax(
-  syntax-rule(name: [Constraint], $C ::= &ctrue | cfalse | C and C \ 
-  | &exists zeta. C | forall alpha. C \ 
-  | &zeta = zeta | psi cis zeta | A ==> C \  
-  | &cdef x : sigma cin C | x <= zeta | sigma <= zeta \ 
+  syntax-rule(name: [Type Variables], $alpha, beta, gamma$),
+
+  syntax-rule(name: [Constraints], $C ::= &ctrue | cfalse | C and C \ 
+  | &exists alpha. C | forall alpha. C \ 
+  | &alpha = alpha | psi subset.eq alpha | A ==> C \  
+  | &cdef x : sigma cin C | x <= alpha | sigma <= alpha \ 
   | &clet x : sigma cin C 
   $),
 
-  syntax-rule(name: [Ambivalent variables], $zeta$),
+  syntax-rule(name: [Shallow Types], $psi ::= alpha | overline(alpha) tformer$), 
 
-  syntax-rule(name: [Shallow Types], $psi ::= alpha | overline(zeta) tformer$), 
-
-  syntax-rule(name: [Constrained\ Type Scheme], $sigma ::= forall overline(alpha), overline(zeta). C => zeta $), 
+  syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= forall overline(alpha), overline(beta). C => gamma $), 
 
   syntax-rule(name: [Assumptions], $A ::= ctrue | A and A | tau = tau$),
-
-  syntax-rule(name: [Equational\ Contexts], $E ::= dot | E, gt = gt$),
   
-  syntax-rule(name: [Assignment], $phi ::= dot | phi[alpha |-> gt] | phi[zeta |-> gz]$), 
+  syntax-rule(name: [Assignments], $phi ::= dot | phi[alpha |-> gt]$), 
 
-  syntax-rule(name: [Environment], $rho ::= dot | rho[x |-> gs]$), 
+  syntax-rule(name: [Environments], $rho ::= dot | rho[x |-> gs]$), 
 
-  syntax-rule(name: [Context], $Delta ::= dot | Delta, alpha | Delta, zeta | Delta, x$)
+  syntax-rule(name: [Contexts], $Delta ::= dot | Delta, alpha : f | Delta, x$),
+
+  syntax-rule(name: [Flexibility], $f ::= circle.small.filled | star$),
 )
 
+Our constraint language distinguishes between flexible and rigid type variables in the well-formedness judgement of constraints $Delta tack C ok$. We forbid the occurances of flexible variables in assumptions $A$ and the variable case of shallow types $psi$. Additionally rigid variables are forbidden in the formers of shallow types $psi$. These restrictions are due to limitations in our solver, not our semantics. The well-formedness rules are given below. 
 
-Ground types are $gt$ and ground ambivalent types are $gz$. 
-
-#judgement-box($E, phi, rho tack.r C $)
-$
-  #proof-tree(
-    rule(
-      $E, phi, rho tack.r ctrue$, 
-      "",
-      name: [(True)]
-    )
-  )
-
-  #h(1cm)
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack.r C_1 and C_2$,
-      $E, phi, rho tack.r C_1$,
-      $E, phi, rho tack.r C_2$,
-      name: [(Conj)]
-    )
-  )
-
-  \
-
-  #v(2cm)
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack.r exists zeta. C$, 
-      $E tack.r gz $, 
-      $E, phi[zeta |-> gz], rho tack.r C$,
-      name: [(Exists)]
-    )
-  )
-
-  #h(1cm)
-
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack.r forall alpha. C$, 
-      $forall gt$, 
-      $E, phi[alpha |-> gt], rho tack.r C$, 
-      name: [(Forall)]
-    )
-  )
-  
-  \ 
-
-  #v(2cm)
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack.r zeta_1 = zeta_2$,
-      $phi(zeta_1) = phi(zeta_2)$, 
-      name: [(Equal)]
-    )
-  )
-
-  #h(1cm)
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack.r psi cis zeta$,
-      $phi(psi) cis phi(zeta)$, 
-      name: [(Is)]
-    )
-  )
-
-  \ 
-
-  #v(2cm)
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack.r A ==> C$, 
-      $(E, phi(A)), phi, rho tack.r C$, 
-      name: [(Impl)]
-    )
-  )
-
-  #h(1cm)
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack cdef x : sigma cin C$, 
-      $E, phi, rho[x |-> (E, phi, rho) sigma] tack C$, 
-      name: [(Def)]
-    )
-  )
-
-  \ 
-  #v(2cm)
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack x <= zeta$, 
-      $phi(zeta) in rho(x)$, 
-      name: [(VarInst)]
-    )
-  )
-
-
-  #h(1cm)
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack sigma <= zeta$, 
-      $phi(zeta) in (E, phi, rho) sigma$, 
-      name: [(SchemeInst)]
-    )
-  )
-
-$
-
-$
-  #proof-tree(
-    rule(
-      $E, phi, rho tack clet x : sigma cin C$, 
-      $E, phi, rho tack exists sigma$, 
-      $E, phi, rho[x |-> (E, phi, rho) sigma] tack C$, 
-      name: [(Let)]
-    )
-  ) 
-
-  \ 
-
-  #v(2cm)
-
-  (E, phi, rho) (forall overline(alpha), overline(zeta). C => zeta) eq.delta { phi'(zeta) : phi scripts(=)_(\\ overline(alpha), overline(zeta)) phi' and E, phi', rho tack C} \ 
-
-  #proof-tree(
-    rule(
-      $E, phi, rho tack exists (forall overline(alpha), overline(zeta). C => zeta)$, 
-      $E, phi, rho tack forall overline(alpha). exists overline(zeta). C$
-    )
-  )
-$
-
-#let ok = textsf("ok")
 
 #judgement-box($Delta tack.r C ok$)
-
 $
+  #v2 
+  
   #proof-tree(
     rule(
       $Delta tack.r ctrue ok$, 
@@ -202,160 +68,486 @@ $
     )
   )
 
-  #h(1cm)
+  #h1 
 
   #proof-tree(
     rule(
       $Delta tack.r cfalse ok$, 
-      $$,
+      $$, 
       name: [(False)]
     )
   )
 
-  \ 
-
-  #v(2cm) 
+  #v2
 
   #proof-tree(
     rule(
-      $Delta tack.r C_1 and C_2 ok$,
+      $Delta tack.r C_1 and C_2 ok$, 
       $Delta tack.r C_1 ok$, 
       $Delta tack.r C_2 ok$, 
       name: [(Conj)]
     )
   )
 
-  #h(1cm)
+  #h1
 
   #proof-tree(
     rule(
-      $Delta tack.r exists zeta. C ok$, 
-      $Delta, zeta tack C ok$, 
-      $zeta \# Delta$,
+      $Delta tack exists alpha. C ok$, 
+      $Delta, alpha : circle.small.filled tack.r C ok$, 
+      $alpha \# Delta$, 
       name: [(Exists)]
     )
   )
 
-  \
-
-  #v(2cm)
+  #v2 
 
   #proof-tree(
     rule(
-      $Delta tack.r forall alpha. C ok$, 
-      $Delta, alpha tack.r C ok$, 
-      $alpha \# Delta$,
+      $Delta tack forall alpha. C ok$, 
+      $Delta, alpha : star tack.r C ok$, 
+      $alpha \# Delta$, 
       name: [(Forall)]
     )
   )
 
-  #h(1cm)
+  #h1
 
   #proof-tree(
     rule(
-      $Delta tack zeta_1 = zeta_2 ok$, 
-      $zeta_1, zeta_2 in Delta$, 
+      $Delta tack alpha_1 = alpha_2 ok$, 
+      $alpha_1, alpha_2 in dom(Delta)$, 
       name: [(Equal)]
     )
   )
 
-  \
-
-  #v(2cm)
+  #v2
 
   #proof-tree(
     rule(
-      $Delta tack psi cis zeta ok$, 
-      $Delta tack psi ok$, 
-      $zeta in Delta$, 
-      name: [(Is)]
+      $Delta tack.r psi subset.eq alpha ok$, 
+      $Delta tack.r psi ok$, 
+      $alpha in dom(Delta)$, 
+      name: [(Sub)]
     )
   )
 
-  #h(1cm)
+  #h1 
 
   #proof-tree(
     rule(
       $Delta tack A ==> C ok$, 
-      $Theta tack A ok$, 
+      $Delta tack A ok$, 
       $Delta tack C ok$, 
       name: [(Impl)]
     )
   )
 
-  \ 
-
-  #v(2cm)
+  #v2 
 
   #proof-tree(
     rule(
       $Delta tack cdef x : sigma cin C ok$, 
-      $Theta tack sigma ok$,
-      $Delta, x tack C ok$,
+      $Delta tack sigma ok$, 
+      $Delta, x tack C ok$, 
       $x \# Delta$, 
       name: [(Def)]
     )
   )
 
-  #h(1cm)
+  #h1 
 
   #proof-tree(
     rule(
-      $Delta tack x <= zeta ok$, 
-      $x in Delta$, 
-      $zeta in Theta$, 
+      $Delta tack x <= alpha ok$, 
+      $x, alpha in dom(Delta)$, 
       name: [(VarInst)]
     )
   )
 
-  \ 
-
-  #v(2cm)
+  #v2
 
   #proof-tree(
     rule(
-      $Delta tack sigma <= zeta ok$, 
-      $Delta tack sigma ok$,
-      $zeta in Theta$, 
+      $Delta tack sigma <= alpha ok$,
+      $Delta tack sigma ok$, 
+      $alpha in dom(Delta)$, 
       name: [(SchemeInst)]
     )
   )
 
-  #h(1cm)
+  #h1 
 
   #proof-tree(
     rule(
-      $Delta tack clet x : sigma cin C ok $, 
+      $Delta tack clet x : sigma cin C ok$, 
       $Delta tack sigma ok$, 
-      $Delta, x tack C ok$,
+      $Delta, x tack C ok$, 
       $x \# Delta$, 
       name: [(Let)]
     )
   ) 
 
-
-  \ 
-
-  #v(2cm)
+  #v2 
 
   #proof-tree(
     rule(
-      $Delta tack forall overline(alpha), overline(zeta). C => zeta ok$, 
-      $Theta'; Delta tack C ok$, 
-      $zeta in Theta'$, 
-      $overline(alpha), overline(zeta) \# Theta$, 
-      name: [(Scheme)], 
-      label: $Theta' = Theta, overline(alpha), overline(zeta)$
+      $Delta tack forall overline(alpha), overline(beta). C => gamma ok$, 
+      $Theta tack C ok$, 
+      $gamma in dom(Theta)$,
+      $overline(alpha), overline(beta) \# Delta$, 
+      label: $Theta = Delta, overline(alpha : star), overline(beta : circle.small.filled)$, 
+      name: [(Scheme)]
     )
   )
-  
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Delta tack ctrue ok$, 
+      $$,
+      name: [(AssumTrue)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Delta tack A_1 and A_2 ok$, 
+      $Delta tack A_1 ok$, 
+      $Delta tack A_2 ok$, 
+      name: [(AssumConj)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Delta tack tau_1 = tau_2 ok$, 
+      $Delta tack tau_1 ok$, 
+      $Delta tack tau_2 ok$, 
+      name: [(AssumEqual)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Delta tack alpha ok$, 
+      $alpha : star in Delta$, 
+      name: [(RtypeVar)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Delta tack overline(tau) tformer ok$,
+      $forall i. space Delta tack tau_i ok$, 
+      name: [(RtypeFormer)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Delta tack alpha ok$, 
+      $alpha : star in Delta$,
+      name: [(StypeVar)]
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Delta tack overline(alpha) tformer ok$, 
+      $forall i. space alpha_i : circle.small.filled in Delta$, 
+      name: [(StypeFormer)]
+    )
+  )
+
+
 $
+
+
+
+== Algebra of Types
+
+We now define the the algebra of types, that is their syntax and semantic interpretation. The grammar of types $tau$ is defined as:
+$
+  tau ::= alpha | overline(tau) tformer | tau approx tau
+$
+
+#let arity = textsf("arity")
+
+Let $cal(S)$ be a _signature_ for type formers, defining an arity function $arity_cal(S)$ mapping type formers $tformer$ to their arity $n in NN$. A type $tau$ is well-formed in the context of the signature $cal(S)$, written $cal(S) tack tau$, if each occurance of the type former $overline(tau') tformer$ has the correct arity $|overline(tau')| = arity_cal(S)(tformer)$.  
+
+Our algebra is associated with a equational theory $E(equiv)$ defined by the following set of axioms:
+
+$
+  tau approx tau &equiv tau \
+  tau_1 approx tau_2 &equiv tau_2 approx tau_1 \
+  tau_1 approx (tau_2 approx tau_3) &equiv (tau_1 approx tau_2) approx tau_3 \
+  (tau_1, ..., tau_2 approx tau_2^', ..., tau_n) tformer &equiv (tau_1, ..., tau_2, ..., tau_n) tformer approx (
+    tau_1, ..., tau_2^', ..., tau_n
+  ) tformer
+$
+
+#let anf = textsf("anf")
+#let amb = textsf("amb")
+
+Our equational theory on types gives rise to a normal form for types which we call _ambivalent normal form_ (ANF). This normal form 
+is where we reduce all distributive occurances of a type formers in ambivalent types until we reach "incompatible" formers. The syntax of ANF is given below. 
+The function $anf$ for converting types to ANFs is straightforward, if relatively tedious. We make use of auxiliary functions $amb(N, N)$ which relies on the ability
+to re-order normal forms using commutativity. 
+
+$
+  A &::= alpha | overline(N) tformer #h1 N &::= A | N approx A
+$
+
+Since the grammars of $A$ and $N$ define a subsets of types, an equational theory is also induced on them by $E(equiv)$. 
+
+#judgement-box($anf(tau) : N$) 
+$
+  anf(alpha) &= alpha \ 
+  anf(overline(tau) tformer) &= overline(anf(tau)) tformer \ 
+  anf(tau_1 approx tau_2) &= amb(anf(tau_1), anf(tau_2))
+$
+#judgement-box($amb(N, N) : N$) 
+$
+  amb(N, alpha) &= cases(
+    N &"if" alpha in N, 
+    N approx alpha #h1&"otherwise"
+  ) \ 
+
+  amb(N_1, overline(N_2) tformer) &= cases(
+    N'_1 approx overline(amb(N'_2, N_2)) tformer #h1&"if" N_1 equiv N'_1 approx overline(N'_2) tformer or N_1 = overline(N'_2) tformer,
+    N_1 approx overline(N_2) tformer &"otherwise"
+  )
+$
+
+#comment[TODO: Explain why ANF is useful -- what problem does it solve]
+
+
+
+*Semantics*. We now formally define the semantic interpretation of types. Informally, the model consists of ground normal forms. A ground (or semantic) type $gt$ is defined by the grammar:
+#let ga = math.upright(math.bold("a"))
+$
+  ga ::= overline(gt) tformer #h1 gt ::= ga | gt approx ga 
+$
+
+We have the additional constraint that for all ground types, $anf(gt) = gt$. That is to say the type is fully normalized. 
+The interpretation of a type $tau$, under the ground assignment $phi$, written $phi(tau)$ is defined by:
+$
+  phi(alpha) &= phi(alpha) \ 
+  phi(overline(tau) tformer) &= overline(phi(tau_i)) tformer \
+  phi(tau_1 approx tau_2) &= amb(phi(tau_1), phi(tau_2))
+$
+
+Having defined the interpretation of types, we may now define what it means for a type $tau_3$ to _contain_ a type $tau_1$. 
+We do so by lifting the definition of containment on semantic types $gt_1 subset.eq gt_3$:
+$
+  #proof-tree(
+    rule(
+      $gt subset.eq gt$,
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $gt_1 subset.eq gt_3$, 
+      $(gt_1 approx gt_2) equiv gt_3$
+    )
+  )
+$ 
+Note that this is equivalent to $amb(gt_1, gt_2) = gt_2$. 
+A ground type $gt$ is consistent, written $consistent(gt)$, iff it doesn't contain $approx$. 
+
+
+== Semantics
+
+Our constraints are interpreted under the model of ground types. A ground (or semantic) assignment $phi$ is a partial function from type variables $alpha$ to ground types $gt$. 
+
+Implication constraints introduce equalities. These are taken into account using a _consistency bit_ $kappa$. If we're in a consistent context, then it follows that only reflexive equalities $gt = gt$ have been introduced. Otherwise we're in an inconsistent context. Consistency affects the types we can introduce in existential binders $exists alpha. C$ -- namely if we're in a consistent context, then it follows that the type assigned to $alpha$ must be consistent. 
+
+An _environment_ $rho$ is a partial function from expression variables $x$ to _ground type schemes_ $gs$ -- a set of consistency and ground type pairs $kappa tack gt$, known as a _ground instance_, which reflects that the scheme was instantiated to $gt$ under the consistency $kappa$. 
+
+
+The satisfiability judgement for constraints $kappa; phi; rho tack C$ states that _in the environment $rho$ with consistency $kappa$, the assignment $phi$ satisfies the constraint $C$_. 
+
+
+#judgement-box($kappa, phi, rho tack.r C $)
+$
+  #v2
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack.r ctrue$, 
+      "",
+      name: [(True)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack.r C_1 and C_2$,
+      $kappa, phi, rho tack.r C_1$,
+      $kappa, phi, rho tack.r C_2$,
+      name: [(Conj)]
+    )
+  )
+
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack.r exists alpha. C$, 
+      $kappa => consistent(gt)$, 
+      $kappa, phi[alpha |-> gt], rho tack.r C$,
+      name: [(Exists)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack.r forall alpha. C$, 
+      $forall gt$, 
+      $kappa and consistent(gt), phi[alpha |-> gt], rho tack.r C$, 
+      name: [(Forall)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack.r alpha_1 = alpha_2$,
+      $phi(alpha_1) = phi(alpha_2)$, 
+      name: [(Equal)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack.r psi subset.eq alpha$,
+      $phi(psi) subset.eq phi(alpha)$, 
+      name: [(Sub)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack.r A ==> C$, 
+      $kappa and phi(A), phi, rho tack.r C$, 
+      name: [(Impl)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack cdef x : sigma cin C$, 
+      $kappa, phi, rho[x |-> (phi, rho) sigma] tack C$, 
+      name: [(Def)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack x <= alpha$, 
+      $kappa tack phi(alpha) in rho(x)$, 
+      name: [(VarInst)]
+    )
+  )
+
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack sigma <= alpha$, 
+      $kappa tack phi(alpha) in (phi, rho) sigma$, 
+      name: [(SchemeInst)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack clet x : sigma cin C$, 
+      $kappa, phi, rho tack exists sigma$, 
+      $kappa, phi, rho[x |-> (phi, rho) sigma] tack C$, 
+      name: [(Let)]
+    )
+  ) 
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack exists (forall overline(alpha), overline(beta). C => gamma)$, 
+      $kappa, phi, rho tack forall overline(alpha). exists overline(beta). C$, 
+      name: [(SchemeSat)]
+    )
+  )
+$
+
+
+We interpret the constrained type scheme $forall overline(alpha), overline(beta). C => gamma$ under the assignment $phi$ and environment $rho$ as the set of ground instances $kappa' tack phi'(gamma)$ if the assignments $phi$ and $phi'$ are equal modulo $overline(alpha), overline(beta)$ under consistency $kappa'$, denoted $phi scripts(=)_(\\ overline(alpha), overline(beta))^(kappa') phi'$, and $phi'$ satisfies $C$:
+$
+  (phi, rho)(forall overline(alpha), overline(beta). C => gamma) = { kappa' tack phi'(gamma) : phi scripts(=)_(\\ overline(alpha), overline(beta))^(kappa') phi' and kappa', phi', rho tack C}
+$
+where assignments $phi$ and $phi'$ are said to be equal modulo $overline(alpha)$ under $kappa$, if
+$
+  forall beta in (dom(phi) sect dom(phi')) \\ overline(alpha). space phi(beta) = phi'(beta) \ and forall alpha in overline(alpha). space kappa ==> consistent(phi'(alpha))
+$
+
+
+#comment[Note: It is odd that the interpretation of schemes doesn't include the consistency at which is was defined. The reasoning behind this that consistency can only decrease and that satisfiability is stable under consistent (i.e. a constraint satisfiable under true is satisfiable under false). Since consistency is referenced in the instance, this ensures that under a 'true' context, the scheme must be satisfable under a true assignment. The let constraint ensures that the scheme must have some instances under the current satisfiability using the $exists sigma$ judgement. This allows us to have the standard let = def + satisfiability check equivalence.]
+
+A constraint $C_1$ entails $C_2$, written $C_1 tack.double C_2$, if every context that satisfies $C_1$ also satisfies $C_2$. Similarly, equivalence $C_1 equiv C_2$ holds if the property is bidirectional.
+
+In our semantics, the $cdef$ form is an _explicit substitution_. More formally, the semantics satisfy the equivalence law:
+$
+  cdef x : sigma cin C equiv C[x := sigma]
+$
+Instantiation constraints satisfy the equivalence law:
+$
+  (forall overline(alpha), overline(beta). C => gamma) <= delta equiv exists overline(alpha), overline(beta). C and gamma = delta
+$
+$clet$ forms are equivalent to $cdef$ constraints that check the satisfiability of the constrainted type scheme:
+$
+  clet x : underbrace((forall overline(alpha), overline(beta). C_1 => gamma), sigma)  cin C_2 equiv (forall overline(alpha). exists overline(beta). C_1) and cdef x : sigma cin C_2 
+$
+
 
 #pagebreak()
 
 == Constraint Generation
 
-We introduce a function $[| e : zeta |]$, which translates the expression $e$ and type variable $zeta$ to a constraint. Assuming $e$ is well-formed under $Delta$ ($Theta; Delta tack e ok $), then $[| e : zeta |]$ is well-formed under $Theta; Delta$ and $zeta$ ($Theta, zeta; Delta tack [|e : zeta|] ok$). 
+We introduce a function $[| e : alpha |]$, which translates the expression $e$ and type variable $alpha$ to a constraint. Assuming $e$ is well-formed under $Delta$ ($Delta tack e ok $), then $[| e : alpha |]$ is well-formed under $Delta$ and $alpha$ ($alpha : circle.small.filled, Delta tack [|e : alpha|] ok$). 
 
 
 #let erefl = textsf("Refl")
@@ -370,107 +562,107 @@ We introduce a function $[| e : zeta |]$, which translates the expression $e$ an
 
 $
   
-  [| x : zeta |] &= x <= zeta \ 
-  [| efun x -> e : zeta |] &= exists zeta_1 zeta_2. cdef x: zeta_1 cin [| e : zeta_2 |] and zeta_1 -> zeta_2 cis zeta \ 
-  [| e_1 e_2 : zeta |] &= exists zeta_1, zeta_2. [| e_1 : zeta_1 |] and [| e_2 : zeta_2 |] and zeta_2 -> zeta cis zeta_1 \ 
-  [| clet x = e_1 cin e_2 : zeta |] &= clet x : paren.l.double e_1 paren.r.double cin [| e_2 : zeta |] \ 
-  [| efun (etype alpha) -> e : zeta |] &= clet x : paren.l.double e paren.r.double_alpha cin x <= zeta \ 
-  [| (e : tau) : zeta |] &= tau cis zeta and [| e : tau |] \ 
-  [| erefl : zeta |] &= exists zeta'. zeta' = zeta' cis zeta \ 
-  // [| eabsurd : zeta |] &= eabsurd \ 
-  [| ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : zeta |] &= [| e_1 : tau_1 = tau_2 |] and (tau_1 = tau_2) ==> [| e_2 : zeta |]
+  [| x : alpha |] &= x <= alpha \ 
+  [| efun x -> e : alpha |] &= exists alpha_1 alpha_2. cdef x: alpha_1 cin [| e : alpha_2 |] and alpha supset.eq alpha_1 -> alpha_2 \ 
+  [| e_1 space e_2 : alpha |] &= exists alpha_1, alpha_2. [| e_1 : alpha_1 |] and [| e_2 : alpha_2 |] and alpha_1 supset.eq alpha_2 -> alpha  \ 
+  [| clet x = e_1 cin e_2 : alpha |] &= clet x : paren.l.double e_1 paren.r.double cin [| e_2 : alpha |] \ 
+  [| efun (etype beta) -> e : alpha |] &= clet x : paren.l.double e paren.r.double_beta cin x <= alpha \ 
+  [| (e : tau) : alpha |] &= alpha supset.eq tau and [| e : tau |] \ 
+  [| erefl : alpha |] &= exists alpha_1. alpha supset.eq (alpha_1 = alpha_1) \ 
+  // [| eabsurd : alpha |] &= eabsurd \ 
+  [| ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : alpha |] &= [| e_1 : tau_1 = tau_2 |] and (tau_1 = tau_2) ==> [| e_2 : alpha |]
 $
 
 $
-  paren.l.double e paren.r.double &= forall zeta. [| e : zeta |] => zeta \ 
-  paren.l.double e paren.r.double_alpha &= forall alpha, zeta. [| e : zeta |] => zeta 
+  paren.l.double e paren.r.double &= forall alpha. [| e : alpha |] => alpha \ 
+  paren.l.double e paren.r.double_alpha &= forall alpha, beta. [| e : beta |] => beta 
 
 $
 
-_Split Types_. For the translation of types $tau$ into shallow types used in constraints, we require the notion of split types. Split types $sigma.alt$  are a pair $Xi triangle.small.r zeta$, where the (deep) type may be reconstructed from the subset constraints in $Xi$ and variable $zeta$.
+_Split Types_. For the translation of types $tau$ into shallow types used in constraints, we require the notion of split types. Split types $sigma.alt$  are a pair $Xi triangle.small.r alpha$, where the (deep) type may be reconstructed from the subset constraints in $Xi$ and variable $alpha$.
 More formally, the grammar of split types $sigma.alt$ is given by:
 $
-  sigma.alt ::= Xi triangle.small.r zeta #h(1cm) Xi ::= exists overline(zeta). Omega #h(1cm) Omega ::= dot | Omega, zeta supset.eq psi
+  sigma.alt ::= Xi triangle.small.r alpha #h(1cm) Xi ::= exists overline(alpha). Omega #h(1cm) Omega ::= dot | Omega, alpha supset.eq psi
 $
 where $psi$ is an shallow type. Here is formal translations between split and deep types:
 $
-  ceil(alpha) &= exists zeta. zeta supset.eq alpha triangle.small.r zeta \ 
-  ceil(zeta) &= dot triangle.small.r zeta \ 
-  ceil(overline(tau) tformer) &= exists zeta. overline(Xi), zeta supset.eq overline(zeta) tformer triangle.small.r zeta &#h(2cm) &"where" ceil(tau_i) = Xi_i triangle.small.r zeta_i \ 
+  ceil(alpha) &= exists beta. beta supset.eq alpha triangle.small.r beta \ 
+  ceil(overline(tau) tformer) &= exists alpha. overline(Xi), alpha supset.eq overline(beta) tformer triangle.small.r alpha &#h(2cm) &"where" ceil(tau_i) = Xi_i triangle.small.r beta_i \ 
 $
-We can now extend the constraint language with the subset constraint $tau cis zeta$ using split types, defined by:
+We can now extend the constraint language with the subset constraint $alpha supset.eq tau$ using split types, defined by:
 $
-  tau cis zeta eq.delta exists overline(zeta). and.big Omega and zeta' = zeta #h(2cm) "where" ceil(tau) = exists overline(zeta). Omega triangle.small.r zeta'
+  alpha supset.eq tau eq.delta exists overline(alpha). and.big Omega and alpha' = alpha #h(2cm) "where" ceil(tau) = exists overline(alpha). Omega triangle.small.r alpha'
 $
-We can additional extend the constraint generation function $[| e : zeta |]$ to be defined on $[| e : tau |]$
+We can additional extend the constraint generation function $[| e : alpha |]$ to be defined on $[| e : tau |]$
 $
-  [| e : tau |] &= exists zeta. tau cis zeta and [| e : zeta |]
-$
-
-== Problems 
-
-
-Substitutivity of rigid types
-
-```ocaml
-let coerce = 
-  fun (type a b) -> fun w -> fun x -> 
-  let w = (w: (a, b) eq) in 
-  let x = (x: a) in
-  match (w : (a, b) eq) with Refl -> (x : b)
-
-let f =
-  fun (type a) -> fun w -> fun x -> 
-  let w = (w : (a, int) eq) in 
-  let x = (x : a) in 
-  match (w : (a, int) eq) with Refl -> 
-      let y = if true then x else 1 in 
-      ignore (coerce Refl y) 
-```
-
-Generated constraints:
-
-$
-  paren.double.l"coerce"paren.double.r_(alpha, beta) &= forall alpha, beta, zeta. \ 
-    & exists zeta_w, zeta_x, zeta_r. zeta_w -> zeta_x -> zeta_r cis zeta and   cdef w: zeta_w, x: zeta_x cin \ 
-    &clet w: forall zeta_w'. alpha = beta cis zeta_w' and w <= alpha = beta => zeta_w' cin \ 
-    &clet x: forall zeta_x'. alpha cis zeta_x' and x <= alpha cin \ 
-    &[| w : alpha = beta|] and alpha = beta ==> exists zeta_r'. beta cin zeta_r and beta cin zeta_r' and x <= zeta_r' \
-
-    &=> zeta
+  [| e : tau |] &= exists alpha. alpha  tau and [| e : alpha |]
 $
 
-Doing some solving, we get
-$
- paren.double.l"coerce"paren.double.r_(alpha, beta) &= forall alpha, beta, zeta_w, zeta_x, zeta_r, zeta. \
- &#h1 zeta_w -> zeta_x -> zeta_r cis zeta \ 
- &#h1 and alpha = beta cin zeta_w and alpha cin zeta_x and beta cin zeta_r  => zeta
-$
 
-Ah ha! So this split means we don't propagate ambivalence correctly! Since if apply a value with $zeta = zeta$ for `w` where $zeta$ is ambivalent $alpha approx "int"$, then the return annotation $beta cin zeta_r$ doesn't ensure that the ambivalence is propagated. Something is wrong with our spec!
-
-Now Olivier's rule for applying `coerce` does trace ambivalence, but it breaks substitution on implication constraints. 
+// == Problems 
 
 
+// Substitutivity of rigid types
 
-Now looking at `f`:
-$
-  [| f : zeta |] &= 
-    clet f_1 : forall alpha, zeta_1 . [| ... : zeta_1 |] => zeta_1 
-    cin f_1 <= zeta \ 
+// ```ocaml
+// let coerce = 
+//   fun (type a b) -> fun w -> fun x -> 
+//   let w = (w: (a, b) eq) in 
+//   let x = (x: a) in
+//   match (w : (a, b) eq) with Refl -> (x : b)
 
-  [| ... : zeta_1 |] &= exists zeta_w, zeta_x, zeta_r. 
-  zeta_w -> zeta_x -> zeta_r cis zeta_1 \ 
-  &and
-  cdef w : zeta_w, x : zeta_x cin [| ... : zeta_r |] \ 
+// let f =
+//   fun (type a) -> fun w -> fun x -> 
+//   let w = (w : (a, int) eq) in 
+//   let x = (x : a) in 
+//   match (w : (a, int) eq) with Refl -> 
+//       let y = if true then x else 1 in 
+//       ignore (coerce Refl y) 
+// ```
 
-  [| ... : zeta_r|] &= clet w : forall zeta_w'. alpha = "int" cis zeta_w' and w <= alpha = "int" => zeta_w', \
-  &#h1 x : forall zeta_x'. alpha cis zeta_x' => zeta_x' and x <= alpha => zeta_x' \
-  &#h1 cin [| ... : zeta_r|]\
-  [| ematch ... : zeta_r|] &= [| w : alpha = "int" |] and alpha = "int" ==> [| ... : zeta_r |] \ 
-  [| clet y = ... : zeta_r|] &= clet y : forall zeta_y. x <= zeta_y and "int" cis zeta_y => zeta_y cin [| ... : zeta_r |] \ 
-  [| "ignore" ... : zeta_r |] &= "unit" cis zeta_r and exists zeta'. [| "coerce" erefl y : zeta' |] 
-$
+// Generated constraints:
+
+// $
+//   paren.double.l"coerce"paren.double.r_(alpha, beta) &= forall alpha, beta, zeta. \ 
+//     & exists zeta_w, zeta_x, zeta_r. zeta_w -> zeta_x -> zeta_r cis zeta and   cdef w: zeta_w, x: zeta_x cin \ 
+//     &clet w: forall zeta_w'. alpha = beta cis zeta_w' and w <= alpha = beta => zeta_w' cin \ 
+//     &clet x: forall zeta_x'. alpha cis zeta_x' and x <= alpha cin \ 
+//     &[| w : alpha = beta|] and alpha = beta ==> exists zeta_r'. beta cin zeta_r and beta cin zeta_r' and x <= zeta_r' \
+
+//     &=> zeta
+// $
+
+// Doing some solving, we get
+// $
+//  paren.double.l"coerce"paren.double.r_(alpha, beta) &= forall alpha, beta, zeta_w, zeta_x, zeta_r, zeta. \
+//  &#h1 zeta_w -> zeta_x -> zeta_r cis zeta \ 
+//  &#h1 and alpha = beta cin zeta_w and alpha cin zeta_x and beta cin zeta_r  => zeta
+// $
+
+// Ah ha! So this split means we don't propagate ambivalence correctly! Since if apply a value with $zeta = zeta$ for `w` where $zeta$ is ambivalent $alpha approx "int"$, then the return annotation $beta cin zeta_r$ doesn't ensure that the ambivalence is propagated. Something is wrong with our spec!
+
+// Now Olivier's rule for applying `coerce` does trace ambivalence, but it breaks substitution on implication constraints. 
+
+
+
+// Now looking at `f`:
+// $
+//   [| f : zeta |] &= 
+//     clet f_1 : forall alpha, zeta_1 . [| ... : zeta_1 |] => zeta_1 
+//     cin f_1 <= zeta \ 
+
+//   [| ... : zeta_1 |] &= exists zeta_w, zeta_x, zeta_r. 
+//   zeta_w -> zeta_x -> zeta_r cis zeta_1 \ 
+//   &and
+//   cdef w : zeta_w, x : zeta_x cin [| ... : zeta_r |] \ 
+
+//   [| ... : zeta_r|] &= clet w : forall zeta_w'. alpha = "int" cis zeta_w' and w <= alpha = "int" => zeta_w', \
+//   &#h1 x : forall zeta_x'. alpha cis zeta_x' => zeta_x' and x <= alpha => zeta_x' \
+//   &#h1 cin [| ... : zeta_r|]\
+//   [| ematch ... : zeta_r|] &= [| w : alpha = "int" |] and alpha = "int" ==> [| ... : zeta_r |] \ 
+//   [| clet y = ... : zeta_r|] &= clet y : forall zeta_y. x <= zeta_y and "int" cis zeta_y => zeta_y cin [| ... : zeta_r |] \ 
+//   [| "ignore" ... : zeta_r |] &= "unit" cis zeta_r and exists zeta'. [| "coerce" erefl y : zeta' |] 
+// $
 
 
 

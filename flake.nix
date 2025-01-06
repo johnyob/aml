@@ -36,7 +36,6 @@
             src = typixLib.cleanTypstSource ./.;
             typstSource = "main.typ";
           };
-
         in {
           packages = {
             inherit report;
@@ -45,9 +44,11 @@
 
           formatter = fmt.config.build.wrapper;
           devShells.default = typixLib.devShell {
-            fontPaths = with pkgs; [ libertinus roboto ];
+            fontPaths = with pkgs; [libertinus roboto];
             packages = with pkgs; [
-              alejandra lefthook typstyle
+              alejandra
+              lefthook
+              typstyle
             ];
           };
         }
