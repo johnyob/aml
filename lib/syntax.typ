@@ -1,7 +1,5 @@
 #let textsf = text.with(font: "roboto")
 #let dom = textsf("dom")
-#let tforall(alpha) = $forall #alpha. med$
-#let tforallb(alpha, bound) = $forall (#alpha >= #bound). med$
 
 #let is-content = this => {
   type(this) == str or type(this) == content or type(this) == symbol
