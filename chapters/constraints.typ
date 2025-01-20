@@ -557,7 +557,6 @@ We introduce a function $[| e : alpha |]$, which translates the expression $e$ a
 #let ewith = textsf("with")
 #let efun = textsf("fun")
 #let etype = textsf("type")
-#let eabsurd = textsf("absurd")
 #let tformer = textsf("F")
 
 $
@@ -569,7 +568,6 @@ $
   [| efun (etype beta) -> e : alpha |] &= clet x : paren.l.double e paren.r.double_beta cin x <= alpha \ 
   [| (e : tau) : alpha |] &= alpha supset.eq tau and [| e : tau |] \ 
   [| erefl : alpha |] &= exists alpha_1. alpha supset.eq (alpha_1 = alpha_1) \ 
-  // [| eabsurd : alpha |] &= eabsurd \ 
   [| ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : alpha |] &= [| e_1 : tau_1 = tau_2 |] and (tau_1 = tau_2) ==> [| e_2 : alpha |]
 $
 

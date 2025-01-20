@@ -20,7 +20,6 @@ In this section we summarise the syntax and typing rules of #aml (Ambivalent ML)
 #let ewith = textsf("with")
 #let efun = textsf("fun")
 #let etype = textsf("type")
-#let eabsurd = textsf("absurd")
 
 _Expressions_. The syntax of expressions is as follows:
 #syntax(
@@ -28,11 +27,11 @@ _Expressions_. The syntax of expressions is as follows:
     name: [Expressions],
     $e ::= &x | efun x -> e | e space e \
       | &elet x = e ein e | efun (etype alpha) -> e | (e : tau) \
-      | &erefl | eabsurd | ematch (e : tau = tau) ewith erefl -> e$,
+      | &erefl | ematch (e : tau = tau) ewith erefl -> e$,
   ),
 )
 
-#aml extends #ml expressions, variables, functions and let expressions are standard. #aml introduces an explicit universal quantifier $efun (etype alpha) -> e$, equivalent to System #textsf("F")'s $Lambda alpha. e$. The constructor $erefl$ has the type $tau = tau$. The $ematch (e : tau_1 = tau_2) ewith erefl -> e'$ construct introduces the type-level equality in $e'$ as a _local constraint_ using the proof $e$. The $eabsurd$ term is used to refute statically impossible cases, such as a inconsistent local constraint $tint = textsf("string")$.
+#aml extends #ml expressions, variables, functions and let expressions are standard. #aml introduces an explicit universal quantifier $efun (etype alpha) -> e$, equivalent to System #textsf("F")'s $Lambda alpha. e$. The constructor $erefl$ has the type $tau = tau$. The $ematch (e : tau_1 = tau_2) ewith erefl -> e'$ construct introduces the type-level equality in $e'$ as a _local constraint_ using the proof $e$.
 
 #let tformer = textsf("F")
 #let tint = textsf("int")
