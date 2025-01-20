@@ -2,24 +2,12 @@
 #import "../lib/syntax.typ": *
 #import "../lib/thm.typ": *
 #import "@preview/curryst:0.3.0": rule, proof-tree
+#import "cmon.typ": *
 
 // HACK to get thm to left align
 #show: thmrules
 
-#let aml = textsf("AML")
-#let ml = textsf("ML")
-
-
 In this section we summarise the syntax and typing rules of #aml (Ambivalent ML), a conservative extension of the #ml calculus with _ambivalent types_ ($tau approx tau'$) and a type-level equality type ($tau = tau'$).
-
-#let tint = textsf("tint")
-#let erefl = textsf("Refl")
-#let elet = textsf("let")
-#let ein = textsf("in")
-#let ematch = textsf("match")
-#let ewith = textsf("with")
-#let efun = textsf("fun")
-#let etype = textsf("type")
 
 _Expressions_. The syntax of expressions is as follows:
 #syntax(
@@ -32,10 +20,6 @@ _Expressions_. The syntax of expressions is as follows:
 )
 
 #aml extends #ml expressions, variables, functions and let expressions are standard. #aml introduces an explicit universal quantifier $efun (etype alpha) -> e$, equivalent to System #textsf("F")'s $Lambda alpha. e$. The constructor $erefl$ has the type $tau = tau$. The $ematch (e : tau_1 = tau_2) ewith erefl -> e'$ construct introduces the type-level equality in $e'$ as a _local constraint_ using the proof $e$.
-
-#let tformer = textsf("F")
-#let tint = textsf("int")
-#let ok = textsf("ok")
 
 _Types_. The syntax of types is as follows:
 #syntax(
@@ -64,8 +48,6 @@ _Type schemes_ are also affected by the notion of _sharing_. Instead of a normal
 Contexts bind program variables to type schemes, introduce _variable bounds_, and store type equations $tau = tau'$.
 They are ordered and duplicates are disallowed. We write $Gamma, Gamma'$ for the concatenation of two contexts (assuming disjointness holds). 
 
-
-#let fv = textsf("fv")
 
 The definition for the set of free variables on types, shallow types, ambivalent types, and schemes is mostly standard.
 

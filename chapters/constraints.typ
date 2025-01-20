@@ -3,20 +3,9 @@
 #import "../lib/syntax.typ": *
 #import "../lib/thm.typ": *
 #import "@preview/curryst:0.3.0": rule, proof-tree
+#import "cmon.typ": *
 
-
-#let aml = textsf("AML")
-#let cdef = textsf("def")
-#let cin = textsf("in")
-#let ctrue = textsf("true")
-#let cfalse = textsf("false")
-#let clet = textsf("let")
-#let cis = textsf("is")
-#let ok = textsf("ok")
 #let consistent = textsf("consistent")
-
-#let var = textsf("Var")
-#let tformer = textsf("F")
 
 #let gt = math.upright(math.bold("t"))
 #let gs = math.upright(math.bold("s"))
@@ -285,8 +274,6 @@ $
   tau ::= alpha | overline(tau) tformer | tau approx tau
 $
 
-#let arity = textsf("arity")
-
 Let $cal(S)$ be a _signature_ for type formers, defining an arity function $arity_cal(S)$ mapping type formers $tformer$ to their arity $n in NN$. A type $tau$ is well-formed in the context of the signature $cal(S)$, written $cal(S) tack tau$, if each occurance of the type former $overline(tau') tformer$ has the correct arity $|overline(tau')| = arity_cal(S)(tformer)$.  
 
 Our algebra is associated with a equational theory $E(equiv)$ defined by the following set of axioms:
@@ -549,15 +536,6 @@ $
 
 We introduce a function $[| e : alpha |]$, which translates the expression $e$ and type variable $alpha$ to a constraint. Assuming $e$ is well-formed under $Delta$ ($Delta tack e ok $), then $[| e : alpha |]$ is well-formed under $Delta$ and $alpha$ ($alpha : circle.small.filled, Delta tack [|e : alpha|] ok$). 
 
-
-#let erefl = textsf("Refl")
-#let elet = textsf("let")
-#let ein = textsf("in")
-#let ematch = textsf("match")
-#let ewith = textsf("with")
-#let efun = textsf("fun")
-#let etype = textsf("type")
-#let tformer = textsf("F")
 
 $
   
