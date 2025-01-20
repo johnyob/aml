@@ -633,7 +633,7 @@ Substitutions can operate on ambivalent types, allowing the instantiation of typ
 _Syntax-directed Typing Judgements._ #aml's typing judgements
 are not syntax-directed. It is useful to have a syntax-directed presentation to admit inversion rules solely on the structure of $e$. 
 
-#judgement-box($Gamma tack e : alpha$, $Gamma tack e : sigma$)
+#judgement-box($Gamma tack e : alpha$, $Gamma tack_"gen" e : sigma$)
 
 $
   #proof-tree(
@@ -669,53 +669,9 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack e : forall (alpha >= psi). sigma$,
-      $Gamma, alpha >= psi tack e : sigma$,
-      $Gamma tack psi ok$,
-      $alpha\#Gamma$
-    )
-  )
-
-  #v2
-
-  #proof-tree(
-    rule(
-      $Gamma tack e scripts(:)_sigma alpha$,
-      $Gamma, beta >= psi tack e : alpha$,
-      $Gamma tack psi ok$,
-      $alpha eq.not beta$,
-      $beta \# Gamma$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack efun (etype alpha) -> e : beta$,
-      $Gamma, alpha tack e : sigma$,
-      $Gamma tack forall alpha. sigma <= beta$,
-      $alpha \# Gamma$,
-    )
-  )
-
-  #v2
-
-  #proof-tree(
-    rule(
       $Gamma tack (\_ : tau) : alpha$,
       $Gamma tack tau ok$,
       $Gamma tack forall floor(tau -> tau) <= alpha$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack elet x = e_1 ein e_2 : alpha$,
-      $Gamma tack e_1 : sigma$,
-      $Gamma, x: sigma tack e_2 : alpha$
     )
   )
 
@@ -737,7 +693,64 @@ $
       $Gamma, tau_1 = tau_2 tack e_2 : beta$
     )
   )
+
+#v2
+
+  #proof-tree(
+    rule(
+      $Gamma tack elet x = e_1 ein e_2 : alpha$,
+      $Gamma tack_"gen" e_1 : sigma$,
+      $Gamma, x: sigma tack e_2 : alpha$
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Gamma tack efun (etype alpha) -> e : beta$,
+      $Gamma, alpha tack_"gen" e : sigma$,
+      $Gamma tack forall alpha. sigma <= beta$,
+      $alpha \# Gamma$,
+    )
+  )
+
+#v2
+
+  #proof-tree(
+    rule(
+      $Gamma tack_"gen" e scripts(:) alpha$,
+      $Gamma, beta >= psi tack_"gen" e : alpha$,
+      $Gamma tack psi ok$,
+      $alpha eq.not beta$,
+      $beta \# Gamma$
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Gamma tack e : forall (alpha >= psi). sigma$,
+      $Gamma, alpha >= psi tack_"gen" e : sigma$,
+      $Gamma tack psi ok$,
+      $alpha\#Gamma$
+    )
+  )
+  
+  #h1
+  
+  #proof-tree(
+    rule(
+      $Gamma tack_"gen" e : alpha$,
+      $Gamma tack e : alpha$
+    )
+  )
+
 $
+
+Informally, the $Gamma tack_"gen" e :
+sigma$ judgment is used for syntactic positions where generalisation happens: the $elet$ rule and the $efun (etype alpha)$ rule. The rules in the $tack_"gen"$ judgment introduce new variables in the typing context, using two different rules depending on whether the new variable also occurs in the result type.
 
 #theorem[
   If $Gamma tack e : alpha$, then $Gamma scripts(tack)_"SD" e : alpha$
