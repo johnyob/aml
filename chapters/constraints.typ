@@ -293,11 +293,18 @@ $
   ) tformer
 $
 
+#comment[It would make sense to quotient over the idempotent-associative-commutative parts (so $approx$ is set-like), but then manipulate distributivity as an explicit relation still.]
+
 #let anf = textsf("anf")
 #let amb = textsf("amb")
 
-Our equational theory on types gives rise to a normal form for types which we call _ambivalent normal form_ (ANF). This normal form 
-is where we reduce all distributive occurances of a type formers in ambivalent types until we reach "incompatible" formers. The syntax of ANF is given below. 
+There would be several notions of normal forms for distributivity. We could _expand_ types by applying the left-to-right direction, repeatedly duplicating the head type-formers until we get sets of non-ambivalent types. Instead we propose to _reduce_ types by applying the right-to-left direction as much as possible. This gives a notion of normal forms where, in a type of the form $tau_1 approx dots approx tau_n$, any given type-former occurs at most once as the head of a $tau_i$.
+
+This notion of "reduced" normal form coincides with the behavior we expect from the constraint solver, where the decomposition rules during unification will enforce this form of maximal sharing.
+
+#comment[Replace "ANF" by "RNF" below (incl. in the macro).]
+
+We give a syntax to these reduced normal forms (RNF) below.
 The function $anf$ for converting types to ANFs is straightforward, if relatively tedious. We make use of auxiliary functions $amb(N, N)$ which relies on the ability
 to re-order normal forms using commutativity. 
 
@@ -363,14 +370,14 @@ $
   )
 $ 
 Note that this is equivalent to $amb(gt_1, gt_2) = gt_2$. 
-A ground type $gt$ is consistent, written $consistent(gt)$, iff it doesn't contain $approx$. 
+A ground type $gt$ is consistent, written $consistent(gt)$, iff it doesn't contain $approx$. The name comes from the fact that if a ground type is in reduced normal form and still contains type subpexression of the form $gt_1 approx gt_2$, then $gt_1$ and $gt_2$ are necessarily incompatible ground types.
 
 
 == Semantics
 
 Our constraints are interpreted under the model of ground types. A ground (or semantic) assignment $phi$ is a partial function from type variables $alpha$ to ground types $gt$. 
 
-Implication constraints introduce equalities. These are taken into account using a _consistency bit_ $kappa$. If we're in a consistent context, then it follows that only reflexive equalities $gt = gt$ have been introduced. Otherwise we're in an inconsistent context. Consistency affects the types we can introduce in existential binders $exists alpha. C$ -- namely if we're in a consistent context, then it follows that the type assigned to $alpha$ must be consistent. 
+Implication constraints introduce equalities. These are taken into account using a _consistency bit_ $kappa$. If we are in a consistent context, then it follows that only reflexive equalities $gt = gt$ have been introduced. Otherwise we are in an inconsistent context. Consistency affects the types we can introduce in existential binders $exists alpha. C$ -- namely if we are in a consistent context, then it follows that the type assigned to $alpha$ must be consistent. 
 
 An _environment_ $rho$ is a partial function from expression variables $x$ to _ground type schemes_ $gs$ -- a set of consistency and ground type pairs $kappa tack gt$, known as a _ground instance_, which reflects that the scheme was instantiated to $gt$ under the consistency $kappa$. 
 
