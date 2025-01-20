@@ -475,8 +475,8 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack x <= alpha$,
-      $phi(alpha) in rho(x)[kappa]$, 
+      $kappa, phi, rho tack x <= alpha$, 
+      $kappa tack phi(alpha) in rho(x)$, 
       name: [(VarInst)]
     )
   )
@@ -487,7 +487,7 @@ $
   #proof-tree(
     rule(
       $kappa, phi, rho tack sigma <= alpha$, 
-      $phi(alpha) in (phi, rho) sigma [kappa]$, 
+      $kappa tack phi(alpha) in (phi, rho) sigma$, 
       name: [(SchemeInst)]
     )
   )
@@ -514,19 +514,13 @@ $
   )
 $
 
-#comment[If we stick to this $kappa$-expanded presentations, we should reformulate the informal text below and the definitions before to remove the notion of 'ground instance'.]
-
 The interpretation of the constrained type scheme $cforall(overline(alpha : f), C, gamma)$ in the assignment $phi$ contains all ground instances $kappa' tack (phi,phi')(gamma)$ which satisfy $C$, where $phi$ is extended with a disjoint assignment $phi'$ for the $overline(alpha)$, that has to pick only consistent ground variables when $kappa'$ is consistent:
 $
-  (phi, rho, kappa')(cforall(overline(alpha : f), C, gamma)) &= {     (phi,phi')(gamma) :
+  (phi, rho)(cforall(overline(alpha : f), C, gamma)) = { kappa' tack (phi,phi')(gamma) :
     dom(phi') = overline(alpha)
     and kappa' => consistent(phi')
     and kappa', (phi, phi'), rho tack C }
-\
-(phi rho) sigma &=
-  ((phi, rho, cfalse) sigma, (phi, rho, ctrue) sigma)
 $
-
 
 #comment[Note: It is odd that the interpretation of schemes doesn't include the consistency at which is was defined. The reasoning behind this that consistency can only decrease and that satisfiability is stable under consistent (i.e. a constraint satisfiable under true is satisfiable under false). Since consistency is referenced in the instance, this ensures that under a 'true' context, the scheme must be satisfable under a true assignment. The let constraint ensures that the scheme must have some instances under the current satisfiability using the $exists sigma$ judgement. This allows us to have the standard let = def + satisfiability check equivalence.]
 
