@@ -51,6 +51,7 @@ _Types_. The syntax of types is as follows:
   syntax-rule(name: [Contexts], $Gamma ::= &dot | Gamma, alpha >= psi_epsilon | Gamma, tau = tau | Gamma, x: sigma$),
 )
 
+
 // Types 
 Types consist of type variables ($alpha$) and type constructors ($tformer$). Type constructors include functions ($arrow$), base types (such as $tint$), and the equality withness type ($=$). 
 
@@ -65,41 +66,23 @@ _Type schemes_ are also affected by the notion of _sharing_. Instead of a normal
 Contexts bind program variables to type schemes, introduce _variable bounds_, and store type equations $tau = tau'$.
 They are ordered and duplicates are disallowed. We write $Gamma, Gamma'$ for the concatenation of two contexts (assuming disjointness holds). 
 
-
 #let fv = textsf("fv")
 
 The definition for the set of free variables on types, shallow types, ambivalent types, and schemes is mostly standard.
 
-#{
-set align(center)
-grid(
-  columns: (auto, auto), 
-  column-gutter: 3cm,
-  row-gutter: 1cm,
-  $
-    fv_tau (alpha) &= { alpha } \ 
-    fv_tau (overline(tau) tformer) &= union.big_i fv(tau_i) \
-    #v1
-    fv_psi (rho) &= fv_rho (rho) \ 
-    fv_psi (psi approx alpha) &= fv_psi (psi) union { alpha } \ 
-    #v1 
-    fv_(psi_epsilon) (epsilon) &= emptyset \
-  $, 
-  $
-    fv_rho (alpha) &= { alpha } \ 
-    fv_rho (overline(alpha) tformer) &= { overline(alpha) } \ 
-    #v1
-    fv_sigma (alpha) &= { alpha } \ 
-    fv_sigma (tforallb(alpha, psi_epsilon) sigma) &= fv(sigma) \\ {alpha} union fv_(psi_epsilon)(psi_epsilon) \ \
-    #v1
-    fv_(psi_epsilon) (psi) &= fv_psi (psi) 
-  $
-)
-}
+$
+  fv(alpha) &= {alpha} \ 
+  fv(overline(tau) tformer) &= union.big_i fv(tau_i) \ 
+  fv(psi approx alpha) &= fv(psi) union { alpha } \ 
+  fv(epsilon) &= emptyset \ 
+  fv(forall (alpha >= psi_epsilon). sigma) &= (fv(sigma) \\ { alpha }) union fv(psi_epsilon)
+$
+
+*Remark 1* (Abuse of notation). _When defining functions or typing judgments using structural induction on syntax, we exploit the hierarchical nature of our syntax, where the set of sentances of one grammar are a subset of another. In such cases, the definitions for the functions / judgements naturally extend without requiring explicit repetition of cases. For example, the definition of free variables on types extends to shallow types since all shallow types are types._
 
 _Well formedness_. Well-formedness judgements for types, type schemes, and contexts ensure the soundness of ambivalent types and the coherent use of variables. We assume standard well-formedness judgement for types $Gamma tack tau ok$, which state that only type variables in $Gamma$ can appear in $tau$. 
 
-#judgement-box($Gamma tack rho ok$, $Gamma tack psi ok$, $Gamma tack psi_epsilon ok$, $Gamma tack sigma ok$)
+#judgement-box($Gamma tack tau ok$, $Gamma tack rho ok$, $Gamma tack psi ok$, $Gamma tack psi_epsilon ok$, $Gamma tack sigma ok$)
 
 $
   #proof-tree(
@@ -113,21 +96,12 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack overline(alpha) tformer ok$,
-      $forall i. space alpha_i in dom(Gamma)$
+      $Gamma tack overline(tau) tformer ok$,
+      $forall i. space tau_i in dom(Gamma)$
     )
   )
 
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma scripts(tack)_psi rho ok$, 
-      $Gamma tack rho ok$
-    )
-  )
-
-  #h1 
+  #v2
 
   #proof-tree(
     rule(
@@ -138,35 +112,16 @@ $
   )
 
 
-  #v2
+  #h1
 
   #proof-tree(
     rule(
-      $Gamma tack epsilon.alt ok$,
+      $Gamma tack epsilon ok$,
       $$
     )
   )
 
-  #h1 
-
-  #proof-tree(
-    rule(
-      $Gamma scripts(tack)_(psi_epsilon) psi ok$, 
-      $Gamma tack psi ok$
-    )
-  )
-
-
   #v2
-
-  #proof-tree(
-    rule(
-      $Gamma scripts(tack)_sigma alpha ok$, 
-      $alpha in dom(Gamma)$
-    )
-  )
-
-  #h1
 
   #proof-tree(
     rule(
