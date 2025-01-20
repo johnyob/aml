@@ -272,7 +272,11 @@ $
 
 $
 
+#comment[The 'approx' rules are redundant if we quotient by commutativity of $approx$.]
+
 To prove such equivalences, we can either use equalities introduced previously in $Gamma$, and the rules of symmetry, transitivity, congruence, decomposition, and distributivity. Type constructors are injective.
+
+#comment[We could remark that the $approx$ rules are equivalent to "linear" versions with $delta_1, delta_2, delta_3$.]
 
 #judgement-box($Gamma ok$)
 
@@ -518,6 +522,12 @@ $
   )
 $
 
+#comment[Rather than extending $Gamma$ into $Gamma, alpha >= psi_epsilon$, we could extend into an arbitrary $Gamma, Delta$ provided $Gamma, Delta ok$.
+
+Sub-question: do we need this same extension rule in the subtyping judgment?]
+
+#comment[The two $alpha <= alpha$ rules should have the same premises.]
+
 _Examples_ of annotation types.
 $
   floor(tint) & "is" &
@@ -572,6 +582,8 @@ $
   )
 $
 
+#comment[Typo: there is an $eta$ missing in $Delta$ somewhere.]
+
 The above instantiation would be utilised in the following code example:
 $
   elet "foo" = &efun (etype alpha) med (w : alpha = tint) -> \
@@ -592,6 +604,8 @@ _Coherence_. An ambivalent type must be _coherent_, namely all the types in the 
 
 Substitutions can operate on ambivalent types, allowing the instantiation of types such as $forall beta >= alpha approx tint. beta$. Substitutions therefore must preserve _coherence_. As a result of this, substitutions allow replacement of an ambivalent type by a "more ambivalent" one. Since the structure of types exists in the context, it is sufficient for substitutions to only substitute variables. 
 
+#comment[Above paragraph a bit unclear to me (Gabriel), it seems to suggest that adding more ambivalence always preserves coherence, which is not always the case.]
+
 #definition[A variable substitution $theta$ preserves ambivalence between $Delta$ and $Delta'$, written $theta : Delta => Delta' ok$, if and only if: \
   #{
     set enum(numbering: "(i)")
@@ -600,6 +614,9 @@ Substitutions can operate on ambivalent types, allowing the instantiation of typ
       + If $alpha >= psi_epsilon in Delta$, then $theta(alpha) >= psi'_epsilon in Delta'$ such that $psi_epsilon subset.eq psi'_epsilon$
     ]
   }]
+
+#comment[we haven't seen $subset.eq$ yet.]
+#comment[It should probably be $theta(psi_epsilon) subset.eq psi'_epsilon$.]
 
 #aml's typing judgements must also preserve coherence. This is ensured with the following regularity theorem:
 #theorem("Regularity")[
