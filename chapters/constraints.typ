@@ -9,14 +9,18 @@
 
 #let gt = math.upright(math.bold("t"))
 #let gs = math.upright(math.bold("s"))
+#let fflex = $upright(f)$
+#let frigid = $upright(r)$
+
 
 In this section, we define the constraint language. Following Pottier and Remy [??], our constraint language uses both expression variables and type variables. 
 
 The syntax is given below. For composition we have $ctrue$, the trivially true constraint, and conjunction $C_1 and C_2$. 
-The equality constraint $alpha = beta$ asserts that the types $alpha$ and $beta$ are equivalent. The _sub_ constraint $psi subset.eq alpha$ asserts that $alpha$ 'contains' the structure of the type $psi$, the definition of 'contains' is somewhat involved (and thus covered later in the section [??]). The existential constraint $exists alpha. C$ that binds the _flexible_ ($circle.small.filled$) type variable $alpha$ in $C$. The universal constraint $forall alpha. C$ that binds the _rigid_ ($star$) type variable $alpha$ in C. 
+The equality constraint $alpha = beta$ asserts that the types $alpha$ and $beta$ are equivalent. The _sub_ constraint $psi subset.eq alpha$ asserts that $alpha$ 'contains' the structure of the type $psi$, the definition of 'contains' is somewhat involved (and thus covered later in the section [??]). The existential constraint $exists alpha. C$ that binds the _flexible_ ($fflex$) type variable $alpha$ in $C$. The universal constraint $forall alpha. C$ that binds the _rigid_ ($frigid$) type variable $alpha$ in C. 
 The _implication_ constraint $A ==> C$ that assumes the assumptions $A$ hold in $C$. The instance constraint $x <= alpha$ (and substitued form $sigma <= alpha$) asserts that the scheme of $x$ can be instantiated to the type $alpha$. The definition and let constraints $cdef x : sigma cin C$ and $clet x : sigma cin C$ bind the scheme $sigma$ to $x$ in $C$, with the $clet$ constraint additionally asserting that $sigma$ has one or more instances. 
 
-Constraints equivalent modulo alpha-renaming of all binders, of both type and expression variables.
+Constraints are considered equivalent modulo alpha-renaming of all binders, of both type and expression variables.
+
 #syntax(
   syntax-rule(name: [Type Variables], $alpha, beta, gamma$),
 
@@ -27,9 +31,10 @@ Constraints equivalent modulo alpha-renaming of all binders, of both type and ex
   | &clet x : sigma cin C 
   $),
 
+  syntax-rule(name: [Deep Types], $tau ::= alpha | overline(tau) tformer$),
   syntax-rule(name: [Shallow Types], $psi ::= alpha | overline(alpha) tformer$), 
 
-  syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= forall overline(alpha), overline(beta). C => gamma $), 
+  syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= cforall(overline(alpha : f), C, gamma) $), 
 
   syntax-rule(name: [Assumptions], $A ::= ctrue | A and A | tau = tau$),
   
@@ -39,7 +44,7 @@ Constraints equivalent modulo alpha-renaming of all binders, of both type and ex
 
   syntax-rule(name: [Contexts], $Delta ::= dot | Delta, alpha : f | Delta, x$),
 
-  syntax-rule(name: [Flexibility], $f ::= circle.small.filled | star$),
+  syntax-rule(name: [Flexibility], $f ::= fflex | frigid$),
 )
 
 Our constraint language distinguishes between flexible and rigid type variables in the well-formedness judgement of constraints $Delta tack C ok$. We forbid the occurances of flexible variables in assumptions $A$ and the variable case of shallow types $psi$. Additionally rigid variables are forbidden in the formers of shallow types $psi$. These restrictions are due to limitations in our solver, not our semantics. The well-formedness rules are given below. 
@@ -83,7 +88,7 @@ $
   #proof-tree(
     rule(
       $Delta tack exists alpha. C ok$, 
-      $Delta, alpha : circle.small.filled tack.r C ok$, 
+      $Delta, alpha : fflex tack.r C ok$, 
       $alpha \# Delta$, 
       name: [(Exists)]
     )
@@ -94,7 +99,7 @@ $
   #proof-tree(
     rule(
       $Delta tack forall alpha. C ok$, 
-      $Delta, alpha : star tack.r C ok$, 
+      $Delta, alpha : frigid tack.r C ok$, 
       $alpha \# Delta$, 
       name: [(Forall)]
     )
@@ -114,10 +119,19 @@ $
 
   #proof-tree(
     rule(
-      $Delta tack.r psi subset.eq alpha ok$, 
-      $Delta tack.r psi ok$, 
-      $alpha in dom(Delta)$, 
-      name: [(Sub)]
+      $Delta tack.r alpha subset.eq beta ok$, 
+      $alpha : frigid in Delta$, 
+      name: [(SubVar)]
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Delta tack.r overline(alpha) tformer subset.eq beta ok$, 
+      $overline(alpha : fflex) in dom(Delta)$, 
+      name: [(SubFormer)]
     )
   )
 
@@ -126,7 +140,7 @@ $
   #proof-tree(
     rule(
       $Delta tack A ==> C ok$, 
-      $Delta tack A ok$, 
+      $Delta_(| frigid) tack A ok$, 
       $Delta tack C ok$, 
       name: [(Impl)]
     )
@@ -181,11 +195,11 @@ $
 
   #proof-tree(
     rule(
-      $Delta tack forall overline(alpha), overline(beta). C => gamma ok$, 
+      $Delta tack cforall(overline(alpha : f), C, gamma) ok$, 
       $Theta tack C ok$, 
       $gamma in dom(Theta)$,
-      $overline(alpha), overline(beta) \# Delta$, 
-      label: $Theta = Delta, overline(alpha : star), overline(beta : circle.small.filled)$, 
+      $overline(alpha) \# Delta$, 
+      label: $Theta = Delta, overline(alpha : f)$, 
       name: [(Scheme)]
     )
   )
@@ -227,8 +241,8 @@ $
   #proof-tree(
     rule(
       $Delta tack alpha ok$, 
-      $alpha : star in Delta$, 
-      name: [(RtypeVar)]
+      $alpha in dom(Delta)$, 
+      name: [(TypeVar)]
     )
   )
 
@@ -238,34 +252,23 @@ $
     rule(
       $Delta tack overline(tau) tformer ok$,
       $forall i. space Delta tack tau_i ok$, 
-      name: [(RtypeFormer)]
+      name: [(TypeFormer)]
     )
   )
-
-  #v2
-
-  #proof-tree(
-    rule(
-      $Delta tack alpha ok$, 
-      $alpha : star in Delta$,
-      name: [(StypeVar)]
-    )
-  )
-
-  #h1 
-
-  #proof-tree(
-    rule(
-      $Delta tack overline(alpha) tformer ok$, 
-      $forall i. space alpha_i : circle.small.filled in Delta$, 
-      name: [(StypeFormer)]
-    )
-  )
-
 
 $
 
 
+We define the restriction $Delta_(| f)$ on contexts but removing all variables with flexibility $f'$ not equal to $f$. 
+
+$
+  (dot)_(| f) &= dot \ 
+  (Delta, alpha : f')_(| f) &= cases(
+    Delta_(| f)\, alpha : f' &#h1&"if" f = f', 
+    Delta_(| f) &&"otherwise"
+  ) \ 
+  (Delta, x)_(| f) &= Delta_(| f), x
+$
 
 == Algebra of Types
 
@@ -534,7 +537,7 @@ $
 
 == Constraint Generation
 
-We introduce a function $[| e : alpha |]$, which translates the expression $e$ and type variable $alpha$ to a constraint. Assuming $e$ is well-formed under $Delta$ ($Delta tack e ok $), then $[| e : alpha |]$ is well-formed under $Delta$ and $alpha$ ($alpha : circle.small.filled, Delta tack [|e : alpha|] ok$). 
+We introduce a function $[| e : alpha |]$, which translates the expression $e$ and type variable $alpha$ to a constraint. Assuming $e$ is well-formed under $Delta$ ($Delta tack e ok $), then $[| e : alpha |]$ is well-formed under $Delta$ and $alpha$ ($alpha : fflex, Delta tack [|e : alpha|] ok$). 
 
 
 $
