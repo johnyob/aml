@@ -514,16 +514,13 @@ $
   )
 $
 
-
-We interpret the constrained type scheme $forall overline(alpha), overline(beta). C => gamma$ under the assignment $phi$ and environment $rho$ as the set of ground instances $kappa' tack phi'(gamma)$ if the assignments $phi$ and $phi'$ are equal modulo $overline(alpha), overline(beta)$ under consistency $kappa'$, denoted $phi scripts(=)_(\\ overline(alpha), overline(beta))^(kappa') phi'$, and $phi'$ satisfies $C$:
+The interpretation of the constrained type scheme $cforall(overline(alpha : f), C, gamma)$ in the assignment $phi$ contains all ground instances $kappa' tack (phi,phi')(gamma)$ which satisfy $C$, where $phi$ is extended with a disjoint assignment $phi'$ for the $overline(alpha)$, that has to pick only consistent ground variables when $kappa'$ is consistent:
 $
-  (phi, rho)(forall overline(alpha), overline(beta). C => gamma) = { kappa' tack phi'(gamma) : phi scripts(=)_(\\ overline(alpha), overline(beta))^(kappa') phi' and kappa', phi', rho tack C}
+  (phi, rho)(cforall(overline(alpha : f), C, gamma)) = { kappa' tack (phi,phi')(gamma) :
+    dom(phi') = overline(alpha)
+    and kappa' => consistent(phi')
+    and kappa', (phi, phi'), rho tack C }
 $
-where assignments $phi$ and $phi'$ are said to be equal modulo $overline(alpha)$ under $kappa$, if
-$
-  forall beta in (dom(phi) sect dom(phi')) \\ overline(alpha). space phi(beta) = phi'(beta) \ and forall alpha in overline(alpha). space kappa ==> consistent(phi'(alpha))
-$
-
 
 #comment[Note: It is odd that the interpretation of schemes doesn't include the consistency at which is was defined. The reasoning behind this that consistency can only decrease and that satisfiability is stable under consistent (i.e. a constraint satisfiable under true is satisfiable under false). Since consistency is referenced in the instance, this ensures that under a 'true' context, the scheme must be satisfable under a true assignment. The let constraint ensures that the scheme must have some instances under the current satisfiability using the $exists sigma$ judgement. This allows us to have the standard let = def + satisfiability check equivalence.]
 
