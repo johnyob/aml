@@ -27,6 +27,8 @@ The syntax is given below. For composition we have $ctrue$, the trivially true c
 The equality constraint $alpha = beta$ asserts that the types $alpha$ and $beta$ are equivalent. The _sub_ constraint $psi subset.eq alpha$ asserts that $alpha$ 'contains' the structure of the type $psi$, the definition of 'contains' is somewhat involved (and thus covered later in the section [??]). The existential constraint $exists alpha. C$ that binds the _flexible_ ($circle.small.filled$) type variable $alpha$ in $C$. The universal constraint $forall alpha. C$ that binds the _rigid_ ($star$) type variable $alpha$ in C. 
 The _implication_ constraint $A ==> C$ that assumes the assumptions $A$ hold in $C$. The instance constraint $x <= alpha$ (and substitued form $sigma <= alpha$) asserts that the scheme of $x$ can be instantiated to the type $alpha$. The definition and let constraints $cdef x : sigma cin C$ and $clet x : sigma cin C$ bind the scheme $sigma$ to $x$ in $C$, with the $clet$ constraint additionally asserting that $sigma$ has one or more instances. 
 
+#let cforall(alphas, C, gamma) = $forall #alphas . space #C => #gamma$
+
 Constraints equivalent modulo alpha-renaming of all binders, of both type and expression variables.
 #syntax(
   syntax-rule(name: [Type Variables], $alpha, beta, gamma$),
@@ -38,9 +40,10 @@ Constraints equivalent modulo alpha-renaming of all binders, of both type and ex
   | &clet x : sigma cin C 
   $),
 
+  syntax-rule(name: [Deep Types], $tau ::= alpha | overline(tau) tformer$),
   syntax-rule(name: [Shallow Types], $psi ::= alpha | overline(alpha) tformer$), 
 
-  syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= forall overline(alpha), overline(beta). C => gamma $), 
+  syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= cforall(overline(alpha : f), C, gamma) $), 
 
   syntax-rule(name: [Assumptions], $A ::= ctrue | A and A | tau = tau$),
   
@@ -50,7 +53,7 @@ Constraints equivalent modulo alpha-renaming of all binders, of both type and ex
 
   syntax-rule(name: [Contexts], $Delta ::= dot | Delta, alpha : f | Delta, x$),
 
-  syntax-rule(name: [Flexibility], $f ::= circle.small.filled | star$),
+  syntax-rule(name: [Flexibility], $f ::= upright(f) | upright(r)$),
 )
 
 Our constraint language distinguishes between flexible and rigid type variables in the well-formedness judgement of constraints $Delta tack C ok$. We forbid the occurances of flexible variables in assumptions $A$ and the variable case of shallow types $psi$. Additionally rigid variables are forbidden in the formers of shallow types $psi$. These restrictions are due to limitations in our solver, not our semantics. The well-formedness rules are given below. 
