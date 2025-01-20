@@ -15,72 +15,80 @@ _Expressions_. The syntax of expressions is as follows:
     name: [Expressions],
     $e ::= &x | efun x -> e | e space e \
       | &elet x = e ein e | efun (etype alpha) -> e | (e : tau) \
+      | &eraise e \
       | &erefl | ematch (e : tau = tau) ewith erefl -> e$,
   ),
 )
 
-#aml extends #ml expressions, variables, functions and let expressions are standard. #aml introduces an explicit universal quantifier $efun (etype alpha) -> e$, equivalent to System #textsf("F")'s $Lambda alpha. e$. The constructor $erefl$ has the type $tau = tau$. The $ematch (e : tau_1 = tau_2) ewith erefl -> e'$ construct introduces the type-level equality in $e'$ as a _local constraint_ using the proof $e$.
+#aml extends #ml expressions, variables, functions and let expressions are standard. #aml introduces an explicit universal quantifier $efun (etype alpha) -> e$, equivalent to System #textsf("F")'s $Lambda alpha. e$. The constructor $erefl$ has the type $tau = tau$.
+$eraise e$ is used to refute expressions $e$ that inhabit the empty (or _void_) type $tbot$
+#footnote[Void types are not entirely necessary for the presentation of ambivalence. However, they remove edge cases when combined with ambivalent types (and ?maybe improve the treatment of absurdity).].
+The $ematch (e : tau_1 = tau_2) ewith erefl -> e'$ construct introduces the type-level equality in $e'$ as a _local constraint_ using the proof $e$.
 
 _Types_. The syntax of types is as follows:
 #syntax(
-  horizontal-spacing: 3cm,
+  horizontal-spacing: 1.5cm,
   syntax-rule(name: [Type Variables], $alpha, beta, gamma$),
   syntax-rule(name: [Type Constructors], $tformer ::= dot arrow dot | tint | dot = dot | ...$),
-  syntax-rule(name: [Types], $tau ::= alpha | overline(tau) tformer$),
-  syntax-rule(name: [Shallow Types], $rho ::= alpha | overline(alpha) tformer$),
-  syntax-rule(name: [Ambivalent Types], $psi ::= rho | psi approx alpha$),
-  syntax-rule(name: [Ambivalent Bound], $psi_epsilon ::= psi | epsilon$),
-  syntax-rule(name: [Type Schemes], $sigma ::= alpha | tforallb(alpha, psi_epsilon) sigma$),
-  syntax-rule(name: [Contexts], $Gamma ::= &dot | Gamma, alpha >= psi_epsilon | Gamma, tau = tau | Gamma, x: sigma$),
+  syntax-rule(name: [(Deep) Types], $tau ::= alpha | overline(tau) tformer | tau approx tau | tbot$),
+  syntax-rule(name: [(Shallow) Types], $rho ::= alpha | overline(alpha) tformer$),
+  syntax-rule(name: [(Shallow) Ambivalent Types], $psi ::= rho | psi approx alpha$),
+  syntax-rule(name: [(Shallow) Quantifier Bounds], $Q ::= psi | tbot$),
+  syntax-rule(name: [(Shallow) Type Schemes], $sigma ::= alpha | tforallb(alpha, Q) sigma$),
+  syntax-rule(name: [Contexts], $Gamma ::= &dot | Gamma, alpha >= Q | Gamma, tau = tau | Gamma, x: sigma$),
 )
 
-// Types 
-Types consist of type variables ($alpha$) and type constructors ($tformer$). Type constructors include functions ($arrow$), base types (such as $tint$), and the equality withness type ($=$). 
+
+
+// Types
+Types consist of type variables ($alpha$), type constructors ($tformer$), the empty type $tbot$, and _ambivalent types_. Type constructors include functions ($arrow$), base types (such as $tint$), and the equality withness type ($=$).
 
 // Ambivalent types
-Intuiviely, ambivalent types are a set of (provably equivalent) types. We use $approx$ to separate the elements in an ambivalent type: the operator is idempotent, associative, and commutative.
-However, the syntax of ambivalent types is doesn't immediately correspond to the intuition. The reason behind this is to address the following challenge: when inferring types, we wish to track information such as the usage of type-level equalities. This information must be _shared_ across all uses of a type to correctly detect ambivalence when exiting the scope of a local constraint introduced by a $ematch$. We represent this explicit sharing of types using type variables ($alpha$). A context $Gamma$ can contain the 'structure' of the type ($alpha >= psi_epsilon in Gamma$).
+Informally, an ambivalent type represents two (provably) _equivalent_ types. We extend this notion to sets of types, where $approx$ is used separate the elements in an ambivalent type: the operator has the unit $bot$ and is idempotent, commutative, and associative. Additionally $approx$ is distributive over type constructors ($tformer$).
+
+#let tequiv = $equiv$
+#let tequivm = $tilde.equiv$
+
+$
+  tau approx tbot &tequiv tau &&("Unit") \
+  tau approx tau &tequiv tau &&("Idemp")\
+  tau_1 approx tau_2 &tequiv tau_2 approx tau_1 &&("Comm") \
+  tau_1 approx (tau_2 approx tau_2) &tequiv (tau_1 approx tau_2) approx tau_3 &#h1&("Assoc") \
+  (tau_1, ..., tau_2, ..., tau_n) tformer approx (
+    tau_1, ..., tau_2^', ..., tau_n
+  ) tformer &tequiv  (tau_1, ..., tau_2 approx tau_2^', ..., tau_n) tformer &&("Dist"_approx) \
+  (tau_1, ..., tbot, ..., tau_n) tformer &tequiv tbot &&("Dist"_tbot)
+$
+
+We consider types equalivalent modulo $op(tequivm) eq.delta op(tequiv) \\ ("Dist")$ -- that is to say $tequivm$ satisfies the unitality, idempotence, commutativity and associaitvity laws. We isolate distributivity since our typing rules and constraints rely on a 'canonical representation' for types which means our treatment of distributivity must be explicit.
+
+
+// Shallow types & sharing
+The shallow types are restricted forms of types. We introduce shallow types to address the following challenge: when inferring types, we wish to track information such as the usage of type-level equalities. This information must be _shared_ across all uses of a type to correctly detect ambivalence when exiting the scope of a local constraint introduced by a $ematch$. We represent this explicit sharing of types using type variables ($alpha$). To represent 'deeper' types, a context $Gamma$ can contain the 'structure' of the type using a bound $alpha >= psi in Gamma$.
 
 // Schemes
-_Type schemes_ are also affected by the notion of _sharing_. Instead of a normal quantifier ($tforall(alpha) sigma$), we introduce a _flexible bounded quantifier_ ($alpha >= psi_epsilon$). This is because on instantiation, _any_ type can be made ambivalent (provided it is consistent in the context), thus the type $psi$ represents a _lower bound_. We write $tforall(alpha) sigma$ for $tforallb(alpha, epsilon) sigma$.
+_Type schemes_ are also affected by the notion of _sharing_. Instead of a normal quantifier ($tforall(alpha) sigma$), we introduce a _flexible bounded quantifier_ ($alpha >= Q$). This is because on instantiation, _any_ type can be made ambivalent (provided it is consistent in the context), thus the type $Q$ represents a _lower bound_. We write $tforall(alpha) sigma$ for $tforallb(alpha, tbot) sigma$.
 
 // Contexts
 Contexts bind program variables to type schemes, introduce _variable bounds_, and store type equations $tau = tau'$.
-They are ordered and duplicates are disallowed. We write $Gamma, Gamma'$ for the concatenation of two contexts (assuming disjointness holds). 
+They are ordered and duplicates are disallowed. We write $Gamma, Gamma'$ for the concatenation of two contexts (assuming disjointness holds).
 
 
-The definition for the set of free variables on types, shallow types, ambivalent types, and schemes is mostly standard.
+The definition for the set of free variables on types and schemes is mostly standard.
 
-#{
-set align(center)
-grid(
-  columns: (auto, auto), 
-  column-gutter: 3cm,
-  row-gutter: 1cm,
-  $
-    fv_tau (alpha) &= { alpha } \ 
-    fv_tau (overline(tau) tformer) &= union.big_i fv(tau_i) \
-    #v1
-    fv_psi (rho) &= fv_rho (rho) \ 
-    fv_psi (psi approx alpha) &= fv_psi (psi) union { alpha } \ 
-    #v1 
-    fv_(psi_epsilon) (epsilon) &= emptyset \
-  $, 
-  $
-    fv_rho (alpha) &= { alpha } \ 
-    fv_rho (overline(alpha) tformer) &= { overline(alpha) } \ 
-    #v1
-    fv_sigma (alpha) &= { alpha } \ 
-    fv_sigma (tforallb(alpha, psi_epsilon) sigma) &= fv(sigma) \\ {alpha} union fv_(psi_epsilon)(psi_epsilon) \ \
-    #v1
-    fv_(psi_epsilon) (psi) &= fv_psi (psi) 
-  $
-)
-}
+$
+  fv(alpha) &= {alpha} \
+  fv(overline(tau) tformer) &= union.big_i fv(tau_i) \
+  fv(tau_1 approx tau_2) &= fv(tau_1) union fv(tau_2) \
+  fv(bot) &= emptyset \
+  fv(forall (alpha >= Q). sigma) &= (fv(sigma) \\ { alpha }) union fv(Q)
+$
 
-_Well formedness_. Well-formedness judgements for types, type schemes, and contexts ensure the soundness of ambivalent types and the coherent use of variables. We assume standard well-formedness judgement for types $Gamma tack tau ok$, which state that only type variables in $Gamma$ can appear in $tau$. 
+*Remark 1* (Abuse of notation). _When defining functions or typing judgments using structural induction on syntax, we exploit the hierarchical nature of our syntax, where the set of sentances of one grammar are a subset of another. In such cases, the definitions for the functions / judgements naturally extend without requiring explicit repetition of cases. For example, the definition of free variables on types extends to shallow types since all shallow types are types._
 
-#judgement-box($Gamma tack rho ok$, $Gamma tack psi ok$, $Gamma tack psi_epsilon ok$, $Gamma tack sigma ok$)
+_Well formedness_. Well-formedness judgements for types, type schemes, and contexts ensure the soundness of ambivalent types and the coherent use of variables. It uses the provable equality judgement $Gamma tack tau_1 = tau_2$ to ensure the _consistency_ of ambivalent types using assumptions in the context $Gamma$.
+
+#judgement-box($Gamma tack tau ok$, $Gamma tack sigma ok$)
 
 $
   #proof-tree(
@@ -94,8 +102,8 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack overline(alpha) tformer ok$,
-      $forall i. space alpha_i in dom(Gamma)$
+      $Gamma tack overline(tau) tformer ok$,
+      $forall i. space Gamma tack tau_i ok$
     )
   )
 
@@ -103,18 +111,10 @@ $
 
   #proof-tree(
     rule(
-      $Gamma scripts(tack)_psi rho ok$, 
-      $Gamma tack rho ok$
-    )
-  )
-
-  #h1 
-
-  #proof-tree(
-    rule(
-      $Gamma tack psi approx alpha ok$,
-      $Gamma tack psi ok$,
-      $Gamma tack alpha = psi$
+      $Gamma tack tau_1 approx tau_2 ok$,
+      $Gamma tack tau_1 ok$,
+      $Gamma tack tau_2 ok$,
+      $Gamma tack tau_1 = tau_2$
     )
   )
 
@@ -123,58 +123,33 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack epsilon.alt ok$,
-      $$
-    )
-  )
-
-  #h1 
-
-  #proof-tree(
-    rule(
-      $Gamma scripts(tack)_(psi_epsilon) psi ok$, 
-      $Gamma tack psi ok$
-    )
-  )
-
-
-  #v2
-
-  #proof-tree(
-    rule(
-      $Gamma scripts(tack)_sigma alpha ok$, 
-      $alpha in dom(Gamma)$
+      $Gamma tack tbot ok$,
     )
   )
 
   #h1
 
+
   #proof-tree(
     rule(
-      $Gamma tack tforallb(alpha, psi_epsilon) sigma$,
-      $Gamma, alpha >= psi tack sigma ok$,
-      $Gamma tack psi_epsilon ok$,
+      $Gamma tack tforallb(alpha, Q) sigma$,
+      $Gamma, alpha >= Q tack sigma ok$,
+      $Gamma tack Q ok$,
       $alpha \# Gamma$
     )
   )
 $
-We prove equivalence on _deep ambivalent types_. A deep ambivalent type is formally defined as:
-$
-  delta ::= alpha | overline(delta) tformer | delta approx delta
-$
-The set of (shallow) ambivalent types is a strict subset of deep ambivalent types. 
 
-#comment([TODO: Explain why introduce deep ambivalent types? tl;dr: makes rules slightly nicer for proving consistency of shallow ambivalent types])
+To prove such equivalences between types, we can either use equalities introduced previously in $Gamma$, and the rules of symmetry, transitivity, congruence, and decomposition. Type constructors are injective.
 
 
-#judgement-box($Gamma tack delta_1 = delta_2$)
-
+#judgement-box($Gamma tack tau_1 = tau_2$)
 
 $
   #proof-tree(
     rule(
-      $Gamma tack delta = delta$,
-      $Gamma tack delta ok$
+      $Gamma tack tau = tau$,
+      $$
     )
   )
 
@@ -182,8 +157,8 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack delta_1 = delta_2$,
-      $Gamma tack delta_2 = delta_1$
+      $Gamma tack tau_1 = tau_2$,
+      $Gamma tack tau_2 = tau_1$
     )
   )
 
@@ -191,9 +166,9 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack delta_1 = delta_3$,
-      $Gamma tack delta_1 = delta_2$,
-      $Gamma tack delta_2 = delta_3$
+      $Gamma tack tau_1 = tau_3$,
+      $Gamma tack tau_1 = tau_2$,
+      $Gamma tack tau_2 = tau_3$
     )
   )
 
@@ -210,50 +185,41 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack overline(delta_1) tformer = overline(delta_2) tformer$,
-      $forall i. space Gamma tack delta_(1i)  = delta_(2i)$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack delta_(1i) = delta_(2i)$,
-      $Gamma tack overline(delta_1) tformer = overline(delta_2) tformer$
-    )
-  )
-
-  \
-
-  #proof-tree(
-    rule(
-      $Gamma tack delta_1 approx delta_2 = delta_1$,
-      $Gamma tack delta_1 = delta_2$,
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack delta_1 approx delta_2 = delta_2$,
-      $Gamma tack delta_1 = delta_2$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack alpha = psi$, 
+      $Gamma tack alpha = psi$,
       $alpha >= psi in Gamma$
     )
   )
 
+  #v2
+
+  #proof-tree(
+    rule(
+      $Gamma tack overline(tau_1) tformer = overline(tau_2) tformer$,
+      $forall i. space Gamma tack tau_(1i)  = tau_(2i)$
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Gamma tack tau_(1i) = tau_(2i)$,
+      $Gamma tack overline(tau_1) tformer = overline(tau_2) tformer$
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Gamma tack tau_1 approx tau_2 = tau_3$,
+      $i in {1, 2}$,
+      $Gamma tack tau_i = tau_3$,
+    )
+  )
 $
 
-To prove such equivalences, we can either use equalities introduced previously in $Gamma$, and the rules of symmetry, transitivity, congruence, decomposition, and distributivity. Type constructors are injective.
+*Remark 2* (Lack of sharing). _Judgements such as provable equivalence or subsumption on types do not rely on sharing since both judgements may increase or decrease ambivalence, thus can be defined on (deep) types._
 
 #judgement-box($Gamma ok$)
 
@@ -269,9 +235,9 @@ $
 
   #proof-tree(
     rule(
-      $Gamma, alpha >= psi_epsilon ok$,
+      $Gamma, alpha >= Q ok$,
       $Gamma ok$,
-      $Gamma tack psi_epsilon ok$,
+      $Gamma tack Q ok$,
       $alpha \# Gamma$
     )
   )
@@ -296,23 +262,29 @@ $
       $Gamma tack sigma ok$,
       $x \# Gamma$
     )
-  )  
-  
+  )
 $
 
 
-
-
-
-_Typing Judgements_. #aml typing judgements have the form $Gamma tack.r e: sigma$ stating that $e$ has the type (scheme) $sigma$ in the context $Gamma$. For the translation of types $tau$ into _shallow types_ used in the typing rules, we require the notion of _split types_. A split type $sigma.alt$ is a pair $Delta triangle.r.small alpha$, where $alpha$ encodes the type $tau$ in the (split type) context $Delta$. 
+_Typing Judgements_. #aml typing judgements have the form $Gamma tack.r e: sigma$ stating that $e$ has the type (scheme) $sigma$ in the context $Gamma$. For the translation of types $tau$ into _shallow types_ used in the typing rules, we require the notion of _split types_. A split type $sigma.alt$ is a pair $Delta triangle.r.small alpha$, where $alpha$ encodes the type $tau$ in the (split type) context $Delta$.
 The translation of types to split types, denoted $floor(tau)$ is defined by:
 
 $
   floor(alpha) &= beta >= alpha triangle.r.small beta #h(4cm) &&"fresh" beta\
-  floor(overline(tau) tformer) &= Delta_1, dots, Delta_n, beta >= overline(alpha) tformer triangle.r.small beta &&"fresh" beta \ 
+  floor(overline(tau) tformer) &= Delta_1, dots, Delta_n, beta >= overline(alpha) tformer triangle.r.small beta &&"fresh" beta \
   &&&"where" floor(tau_i) = Delta_i triangle.r.small alpha_i
 $
-where $Delta ::= dot | Delta, alpha >= psi_epsilon$. We write $forall floor(tau)$ for the type scheme $forall Delta. alpha$. 
+where $Delta ::= dot | Delta, alpha >= Q$. We write $forall floor(tau)$ for the type scheme $forall Delta. alpha$.
+
+The typing rules of #aml have a similar shape to #ml, but differ in unusal ways due to _sharing_. (Var), (Let), (TFun) and (Sub) are standard.
+
+Our version of (Fun) generalizes the function type that is introduced since its type may subsumed to a more ambivalent type. Similarly the (App) rule differs from the standard presentation as the function type $alpha_1$ may be _ambivalent_ -- but _must_ contain the structure of a function type $beta_1 -> beta_2$.
+
+(Annot) allows an explicit loss of sharing by duplicating the type $tau$ before converting it a shallow type (scheme). The loss of sharing allows one to _eliminate ambivalence_. This technique of removing sharing on annotations is not novel, indeed #mlf uses this approach with its 'coercion primitives' [https://gallium.inria.fr/~remy/mlf/mlf-type-inference-long.pdf].
+
+(Refl) (ignoring sharing) states that $erefl$ has the type $alpha = alpha$ for any $alpha$. The (Match) rule is used to destruct a proof of $tau_1 = tau_2$, adding it to the typing context while checking the body $e_2$; the proof $e_1$ must have the type $tau_1 = tau_2$ (ignoring any ambivalence).
+
+(Raise) is similarly standard, requiring $e$ to have the structure $tbot$. However, like (App) we need to ensure that ambivalence is handled correctly.
 
 
 #judgement-box($Gamma tack e : sigma$)
@@ -321,7 +293,8 @@ $
   #proof-tree(
     rule(
       $Gamma tack x : Gamma(x)$,
-      $$
+      $$,
+      name: [(Var)]
     )
   )
 
@@ -331,7 +304,8 @@ $
     rule(
       $Gamma tack efun x -> e : tforallb(alpha, beta_1 -> beta_2) alpha$,
       $Gamma, x : beta_1 tack e : beta_2$,
-      $Gamma tack beta_1 ok$
+      $Gamma tack beta_1 ok$,
+      name: [(Fun)]
     )
   )
 
@@ -343,18 +317,20 @@ $
       $Gamma tack e_1 space e_2 : beta_2$,
       $Gamma tack e_1 : alpha_1$,
       $Gamma tack e_2 : beta_1$,
-      $Gamma tack beta_1 -> beta_2 <= alpha_1$
+      $Gamma tack beta_1 -> beta_2 <= alpha_1$,
+      name: [(App)]
     )
   )
 
   #h1
 
+
   #proof-tree(
     rule(
-      $Gamma tack e : tforallb(alpha, psi_epsilon) sigma$,
-      $Gamma, alpha >= psi_epsilon tack e : sigma$,
-      $Gamma tack psi_epsilon ok$,
-      $alpha\#Gamma$
+      $Gamma tack efun (etype alpha) -> e : tforall(alpha) sigma$,
+      $Gamma, alpha tack e : sigma$,
+      $alpha \# Gamma$,
+      name: [(TFun)]
     )
   )
 
@@ -362,11 +338,11 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack e : alpha$,
-      $Gamma, beta >= psi_epsilon tack e : alpha$,
-      $Gamma tack psi_epsilon ok$,
-      $alpha eq.not beta$, 
-      $beta \# Gamma$
+      $Gamma tack e : tforallb(alpha, Q) sigma$,
+      $Gamma, alpha >= Q tack e : sigma$,
+      $Gamma tack Q ok$,
+      $alpha\#Gamma$,
+      name: [(Gen)]
     )
   )
 
@@ -374,9 +350,12 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack efun (etype alpha) -> e : tforall(alpha) sigma$,
-      $Gamma, alpha tack e : sigma$,
-      $alpha \# Gamma$
+      $Gamma tack e : alpha$,
+      $Gamma, beta >= Q tack e : alpha$,
+      $Gamma tack Q ok$,
+      $alpha eq.not beta$,
+      $beta \# Gamma$,
+      name: [(Bind)]
     )
   )
 
@@ -385,7 +364,8 @@ $
   #proof-tree(
     rule(
       $Gamma tack (\_ : tau) : forall floor(tau -> tau)$,
-      $Gamma tack tau ok$
+      $Gamma tack tau ok$,
+      name: [(Annot)]
     )
   )
 
@@ -395,16 +375,8 @@ $
     rule(
       $Gamma tack elet x = e_1 ein e_2 : sigma_2$,
       $Gamma tack e_1 : sigma_1$,
-      $Gamma, x: sigma_1 tack e_2 : sigma_2$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack erefl : tforall((alpha, beta >= alpha = alpha)) beta$,
-      $$
+      $Gamma, x: sigma_1 tack e_2 : sigma_2$,
+      name: [(Let)]
     )
   )
 
@@ -412,9 +384,32 @@ $
 
   #proof-tree(
     rule(
+      $Gamma tack erefl : tforall((alpha, beta >= alpha = alpha)) beta$,
+      $$,
+      name: [(Refl)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
       $Gamma tack ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : beta$,
       $Gamma tack (e_1 : tau_1 = tau_2) : alpha$,
-      $Gamma, tau_1 = tau_2 tack e_2 : beta$
+      $Gamma, tau_1 = tau_2 tack e_2 : beta$,
+      name: [(Match)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Gamma tack eraise e : beta$,
+      $Gamma tack e : alpha$,
+      $Gamma tack tbot <= alpha$,
+      $Gamma tack beta ok$,
+      name: [(Raise)]
     )
   )
 
@@ -425,28 +420,23 @@ $
       $Gamma tack e : sigma'$,
       $Gamma tack e : sigma$,
       $Gamma tack sigma <= sigma'$,
+      name: [(Sub)]
     )
   )
 $
 
 
-#judgement-box($Gamma tack psi_epsilon <= psi_epsilon^'$, $Gamma tack psi_epsilon <= alpha$, $Gamma tack sigma <= sigma'$)
+#comment[I prefer this formulation of $<=$ on types (since it matches our approach on ground types). But it is less clear that we preserve sharing. Namely It'd be nice to prove that derivation of the form $tau <= Q$ cannot 'forget' any the ambivalence in $Q$. This is kinda evident in the first case of $<=$ since we're not 'forgetting' $tau_1$ and our $tequivm$ laws ensure we don't mess with the 'form' of $tau_1$]
+
+#judgement-box($Gamma tack tau_1 <= tau_2$, $Gamma tack sigma_1 <= sigma_2$)
 
 
 
 $
   #proof-tree(
     rule(
-      $Gamma tack epsilon <= psi_epsilon$,
+      $Gamma tack tbot <= tau$, 
       $$
-    )
-  )
-  #h1 
-
-  #proof-tree(
-    rule(
-      $Gamma tack psi approx alpha <= psi' approx alpha$,
-      $Gamma tack psi <= psi'$
     )
   )
 
@@ -454,47 +444,28 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack rho <= psi$,
-      $rho in psi$
+      $Gamma tack tau_1 <= tau_1 approx tau_2$,
+      $Gamma tack tau_1 = tau_2$
     )
   )
-  #v2
-
-  #proof-tree(
-    rule(
-      $Gamma tack alpha <= alpha$,
-      $$
-    )
-  )
-
-  #h1 
-
-  #proof-tree(
-    rule(
-      $Gamma tack psi_epsilon <= alpha$,
-      $Gamma tack psi_epsilon <= psi_epsilon^'$,
-      $alpha >= psi_epsilon^' in Gamma$
-    )
-  )
-
-
-  #v2
-
-  #proof-tree(
-    rule(
-      $Gamma scripts(tack)_sigma alpha <= alpha$,
-      $alpha in dom(Gamma)$
-    )
-  )
-
 
   #h1
 
   #proof-tree(
     rule(
-      $Gamma tack tforallb(alpha, psi_epsilon) sigma <= sigma'$,
+      $Gamma tack tau <= alpha$,
+      $Gamma tack tau <= psi$,
+      $alpha >= psi in Gamma$
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Gamma tack tforallb(alpha, Q) sigma <= sigma'$,
       $Gamma tack sigma[alpha := beta] <= sigma'$,
-      $Gamma tack psi_epsilon <= beta$
+      $Gamma tack Q <= beta$
     )
   )
 $
@@ -514,7 +485,7 @@ $
   & tforall(lr((
      #block[$
      beta_1 >= alpha, gamma_1 >= tint, delta_1 >= beta_1 -> gamma_1, \
-     beta_2 >= alpha, gamma_2 >= tint, delta_2 >= beta_2 -> gamma_2, \ 
+     beta_2 >= alpha, gamma_2 >= tint, delta_2 >= beta_2 -> gamma_2, \
      eta >= delta_1 -> delta_2
      $]
    ))) eta
@@ -523,29 +494,28 @@ $
 _Examples_ of subsumption.
 With $Delta = beta'_1 >= tint approx alpha, gamma'_1 >= tint approx alpha, delta'_1 >= beta'_1 -> gamma'_1, beta'_2 >= alpha, gamma'_2 >= tint, delta'_2 >= beta'_2 -> gamma'_2, eta' >= delta'_1 -> delta'_2$
 $
-  
   #proof-tree(
     rule(
-      $underbrace(alpha\, alpha = tint\, Delta', Gamma) tack forall floor((alpha -> tint) -> (alpha -> tint)) <= eta$, 
+      $underbrace(alpha\, alpha = tint\, Delta', Gamma) tack forall floor((alpha -> tint) -> (alpha -> tint)) <= eta$,
       rule(
         $Gamma tack forall ( gamma_1 >= tint, ...). eta$,
         rule(
-          $Gamma tack forall (delta_1 >= beta'_1 -> gamma'_1, ...). eta$, 
-          
-          rule($Gamma tack forall(beta_1 >= alpha, ...). eta$, $dots.v$), 
+          $Gamma tack forall (delta_1 >= beta'_1 -> gamma'_1, ...). eta$,
+
+          rule($Gamma tack forall(beta_1 >= alpha, ...). eta$, $dots.v$),
           rule(
-            $Gamma tack beta'_1 -> gamma'_1 <= delta'_1$, 
+            $Gamma tack beta'_1 -> gamma'_1 <= delta'_1$,
             $dots.v$
           )
-        ), 
+        ),
         rule(
           $Gamma tack tint <= gamma'_1$,
-          rule($Gamma tack tint <= tint approx alpha$, $dots.v$), 
+          rule($Gamma tack tint <= tint approx alpha$, $dots.v$),
           $gamma'_1 >= tint approx alpha in Gamma$
         )
-      ), 
+      ),
       rule(
-        $Gamma tack alpha <= beta'_1$, 
+        $Gamma tack alpha <= beta'_1$,
         rule($Gamma tack alpha <= tint approx alpha$, $dots.v$),
         $beta'_1 >= tint approx alpha in Gamma$
       )
@@ -556,14 +526,14 @@ $
 The above instantiation would be utilised in the following code example:
 $
   elet "foo" = &efun (etype alpha) med (w : alpha = tint) -> \
-  &ematch (w : alpha = tint) ewith erefl -> \ 
+  &ematch (w : alpha = tint) ewith erefl -> \
   & ((efun (x : alpha) -> x) : alpha -> tint)
 $
-where $efun (x : tau) -> e$ is syntactic sugar for $efun x -> elet x = (x : tau) ein e$. 
-The function $efun (x : alpha) -> x$ would have the type 
-$alpha -> alpha approx tint$ (sharing removed for readability). 
+where $efun (x : tau) -> e$ is syntactic sugar for $efun x -> elet x = (x : tau) ein e$.
+The function $efun (x : alpha) -> x$ would have the type
+$alpha -> alpha approx tint$ (sharing removed for readability).
 
-#comment[TODO: Do example with ambivalent coerce instantiation]. 
+#comment[TODO: Do example with ambivalent coerce instantiation].
 
 
 
@@ -571,7 +541,7 @@ _Coherence_. An ambivalent type must be _coherent_, namely all the types in the 
 
 #definition[An ambivalent type $psi$ is said to be coherent in the context $Gamma$ if and only if $Gamma tack psi ok$]
 
-Substitutions can operate on ambivalent types, allowing the instantiation of types such as $forall beta >= alpha approx tint. beta$. Substitutions therefore must preserve _coherence_. As a result of this, substitutions allow replacement of an ambivalent type by a "more ambivalent" one. Since the structure of types exists in the context, it is sufficient for substitutions to only substitute variables. 
+Substitutions can operate on ambivalent types, allowing the instantiation of types such as $forall beta >= alpha approx tint. beta$. Substitutions therefore must preserve _coherence_. As a result of this, substitutions allow replacement of an ambivalent type by a "more ambivalent" one. Since the structure of types exists in the context, it is sufficient for substitutions to only substitute variables.
 
 #definition[A variable substitution $theta$ preserves ambivalence between $Delta$ and $Delta'$, written $theta : Delta => Delta' ok$, if and only if: \
   #{
@@ -595,7 +565,7 @@ Substitutions can operate on ambivalent types, allowing the instantiation of typ
 #comment[TODO: Principality & Monotonicity & Substitution Stability]
 
 _Syntax-directed Typing Judgements._ #aml's typing judgements
-are not syntax-directed. It is useful to have a syntax-directed presentation to admit inversion rules solely on the structure of $e$. 
+are not syntax-directed. It is useful to have a syntax-directed presentation to admit inversion rules solely on the structure of $e$.
 
 #judgement-box($Gamma tack e : alpha$, $Gamma tack e : sigma$)
 
@@ -707,7 +677,7 @@ $
   If $Gamma tack e : alpha$, then $Gamma scripts(tack)_"SD" e : alpha$
 
   #proof[
-    
+
   ]
 ]
 
