@@ -28,6 +28,8 @@ The equality constraint $alpha = beta$ asserts that the types $alpha$ and $beta$
 The _implication_ constraint $A ==> C$ that assumes the assumptions $A$ hold in $C$. The instance constraint $x <= alpha$ (and substitued form $sigma <= alpha$) asserts that the scheme of $x$ can be instantiated to the type $alpha$. The definition and let constraints $cdef x : sigma cin C$ and $clet x : sigma cin C$ bind the scheme $sigma$ to $x$ in $C$, with the $clet$ constraint additionally asserting that $sigma$ has one or more instances. 
 
 #let cforall(alphas, C, gamma) = $forall #alphas . space #C => #gamma$
+#let fflex = $upright(f)$
+#let frigid = $upright(r)$
 
 Constraints equivalent modulo alpha-renaming of all binders, of both type and expression variables.
 #syntax(
@@ -53,7 +55,7 @@ Constraints equivalent modulo alpha-renaming of all binders, of both type and ex
 
   syntax-rule(name: [Contexts], $Delta ::= dot | Delta, alpha : f | Delta, x$),
 
-  syntax-rule(name: [Flexibility], $f ::= upright(f) | upright(r)$),
+  syntax-rule(name: [Flexibility], $f ::= fflex | frigid$),
 )
 
 Our constraint language distinguishes between flexible and rigid type variables in the well-formedness judgement of constraints $Delta tack C ok$. We forbid the occurances of flexible variables in assumptions $A$ and the variable case of shallow types $psi$. Additionally rigid variables are forbidden in the formers of shallow types $psi$. These restrictions are due to limitations in our solver, not our semantics. The well-formedness rules are given below. 
@@ -128,10 +130,19 @@ $
 
   #proof-tree(
     rule(
-      $Delta tack.r psi subset.eq alpha ok$, 
-      $Delta tack.r psi ok$, 
-      $alpha in dom(Delta)$, 
-      name: [(Sub)]
+      $Delta tack.r alpha subset.eq beta ok$, 
+      $alpha : frigid in Delta$, 
+      name: [(Sub-rigid)]
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Delta tack.r overline(alpha) tformer subset.eq beta ok$, 
+      $overline(alpha : fflex) in dom(Delta)$, 
+      name: [(Sub-structure)]
     )
   )
 
@@ -140,7 +151,7 @@ $
   #proof-tree(
     rule(
       $Delta tack A ==> C ok$, 
-      $Delta tack A ok$, 
+      $"rigid"(Delta) tack A ok$, 
       $Delta tack C ok$, 
       name: [(Impl)]
     )
@@ -195,11 +206,11 @@ $
 
   #proof-tree(
     rule(
-      $Delta tack forall overline(alpha), overline(beta). C => gamma ok$, 
+      $Delta tack cforall(overline(alpha : f), C, gamma) ok$, 
       $Theta tack C ok$, 
       $gamma in dom(Theta)$,
-      $overline(alpha), overline(beta) \# Delta$, 
-      label: $Theta = Delta, overline(alpha : star), overline(beta : circle.small.filled)$, 
+      $overline(alpha) \# Delta$, 
+      label: $Theta = Delta, overline(alpha : f)$, 
       name: [(Scheme)]
     )
   )
@@ -241,8 +252,8 @@ $
   #proof-tree(
     rule(
       $Delta tack alpha ok$, 
-      $alpha : star in Delta$, 
-      name: [(RtypeVar)]
+      $alpha in dom(Delta)$, 
+      name: [(TypeVar)]
     )
   )
 
@@ -252,34 +263,13 @@ $
     rule(
       $Delta tack overline(tau) tformer ok$,
       $forall i. space Delta tack tau_i ok$, 
-      name: [(RtypeFormer)]
+      name: [(TypeFormer)]
     )
   )
-
-  #v2
-
-  #proof-tree(
-    rule(
-      $Delta tack alpha ok$, 
-      $alpha : star in Delta$,
-      name: [(StypeVar)]
-    )
-  )
-
-  #h1 
-
-  #proof-tree(
-    rule(
-      $Delta tack overline(alpha) tformer ok$, 
-      $forall i. space alpha_i : circle.small.filled in Delta$, 
-      name: [(StypeFormer)]
-    )
-  )
-
 
 $
 
-
+#comment[If we go this way, define what $"rigid"(Delta)$ is.]
 
 == Algebra of Types
 
