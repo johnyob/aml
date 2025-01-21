@@ -22,7 +22,6 @@
 #let ewith = textsf("with")
 #let efun = textsf("fun")
 #let etype = textsf("type")
-#let eraise = textsf("raise")
 
 // Constraints
 #let cdef = textsf("def")

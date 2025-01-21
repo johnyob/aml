@@ -15,14 +15,11 @@ _Expressions_. The syntax of expressions is as follows:
     name: [Expressions],
     $e ::= &x | efun x -> e | e space e \
       | &elet x = e ein e | efun (etype alpha) -> e | (e : tau) \
-      | &eraise e \
       | &erefl | ematch (e : tau = tau) ewith erefl -> e$,
   ),
 )
 
 #aml extends #ml expressions, variables, functions and let expressions are standard. #aml introduces an explicit universal quantifier $efun (etype alpha) -> e$, equivalent to System #textsf("F")'s $Lambda alpha. e$. The constructor $erefl$ has the type $tau = tau$.
-$eraise e$ is used to refute expressions $e$ that inhabit the empty (or _void_) type $tbot$
-#footnote[Void types are not entirely necessary for the presentation of ambivalence. However, they remove edge cases when combined with ambivalent types (and ?maybe improve the treatment of absurdity).].
 The $ematch (e : tau_1 = tau_2) ewith erefl -> e'$ construct introduces the type-level equality in $e'$ as a _local constraint_ using the proof $e$.
 
 _Types_. The syntax of types is as follows:
@@ -272,7 +269,14 @@ The translation of types to split types, denoted $floor(tau)$ is defined by:
 $
   floor(alpha) &= beta >= alpha triangle.r.small beta #h(4cm) &&"fresh" beta\
   floor(overline(tau) tformer) &= Delta_1, dots, Delta_n, beta >= overline(alpha) tformer triangle.r.small beta &&"fresh" beta \
-  &&&"where" floor(tau_i) = Delta_i triangle.r.small alpha_i
+  &&&"where" floor(tau_i) = Delta_i triangle.r.small alpha_i \ 
+  floor(tau_1 approx tau_2) &= Delta_1, Delta_2, beta >= alpha_1 approx alpha_2 triangle.r.small beta && "fresh" beta \ 
+  &&&"where" floor(tau_i) = Delta_i triangle.r.small alpha_i \ 
+  floor(tbot) &= beta = tbot triangle.r.small beta \
+  &#comment[^ This doesn't quite work]
+  // We morally want to say that bot translate into a variable + something else 
+  // But we need some say to say that variable must be provably equal to bot instead must be greater than bot (which every type is trivially)
+  // One idea is that we mimic MLF more and we use a 'rigid bound' for quantifiers as well -- which simply states that the type must be equivalent (unit, idemp, comm, assoc)
 $
 where $Delta ::= dot | Delta, alpha >= Q$. We write $forall floor(tau)$ for the type scheme $forall Delta. alpha$.
 
@@ -283,9 +287,6 @@ Our version of (Fun) generalizes the function type that is introduced since its 
 (Annot) allows an explicit loss of sharing by duplicating the type $tau$ before converting it a shallow type (scheme). The loss of sharing allows one to _eliminate ambivalence_. This technique of removing sharing on annotations is not novel, indeed #mlf uses this approach with its 'coercion primitives' [https://gallium.inria.fr/~remy/mlf/mlf-type-inference-long.pdf].
 
 (Refl) (ignoring sharing) states that $erefl$ has the type $alpha = alpha$ for any $alpha$. The (Match) rule is used to destruct a proof of $tau_1 = tau_2$, adding it to the typing context while checking the body $e_2$; the proof $e_1$ must have the type $tau_1 = tau_2$ (ignoring any ambivalence).
-
-(Raise) is similarly standard, requiring $e$ to have the structure $tbot$. However, like (App) we need to ensure that ambivalence is handled correctly.
-
 
 #judgement-box($Gamma tack e : sigma$)
 
@@ -405,18 +406,6 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack eraise e : beta$,
-      $Gamma tack e : alpha$,
-      $Gamma tack tbot <= alpha$,
-      $Gamma tack beta ok$,
-      name: [(Raise)]
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
       $Gamma tack e : sigma'$,
       $Gamma tack e : sigma$,
       $Gamma tack sigma <= sigma'$,
@@ -444,7 +433,7 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack tau_1 <= tau_1 approx tau_2$,
+      $Gamma tack tau_i <= tau_1 approx tau_2$,
       $Gamma tack tau_1 = tau_2$
     )
   )
