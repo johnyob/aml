@@ -22,9 +22,10 @@ The _implication_ constraint $A ==> C$ that assumes the assumptions $A$ hold in 
 Constraints are considered equivalent modulo alpha-renaming of all binders, of both type and expression variables.
 
 #syntax(
+
   syntax-rule(name: [Type Variables], $alpha, beta, gamma$),
 
-  syntax-rule(name: [Constraints], $C ::= &ctrue | cfalse | C and C \ 
+  syntax-rule(name: [Constraints], $C ::= &ctrue | cfalse | cabsurd | C and C \ 
   | &exists alpha. C | forall alpha. C \ 
   | &alpha = alpha | psi subset.eq alpha | A ==> C \  
   | &cdef x : sigma cin C | x <= alpha | sigma <= alpha \ 
@@ -37,6 +38,8 @@ Constraints are considered equivalent modulo alpha-renaming of all binders, of b
   syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= cforall(overline(alpha : f), C, gamma) $), 
 
   syntax-rule(name: [Assumptions], $A ::= ctrue | A and A | tau = tau$),
+
+  syntax-rule(name: [Falsy assumptions], $A_cfalse ::= A | cfalse$), 
   
   syntax-rule(name: [Assignments], $phi ::= dot | phi[alpha |-> gt]$), 
 
@@ -69,6 +72,16 @@ $
       $Delta tack.r cfalse ok$, 
       $$, 
       name: [(False)]
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Delta tack.r cabsurd ok$, 
+      $$, 
+      name: [(Absurd)]
     )
   )
 
@@ -372,21 +385,27 @@ A ground type $gt$ is consistent, written $consistent(gt)$, iff it doesn't conta
 
 Our constraints are interpreted under the model of ground types. A ground (or semantic) assignment $phi$ is a partial function from type variables $alpha$ to ground types $gt$. 
 
-Implication constraints introduce equalities. These are taken into account using a _consistency bit_ $kappa$. If we are in a consistent context, then it follows that only reflexive equalities $gt = gt$ have been introduced. Otherwise we are in an inconsistent context. Consistency affects the types we can introduce in existential binders $exists alpha. C$ -- namely if we are in a consistent context, then it follows that the type assigned to $alpha$ must be consistent. 
+Implication constraints introduce equalities. These are taken into account as a set of assumptions $A_cfalse$. If we are in a consistent context, then it follows that $A_cfalse$ is satisfiable under the current assignment $phi$ *and* all types in the assignment $phi$ are _consistent_. Otherwise we are in an inconsistent context. We write $consistent(A, phi)$ for the consistency of the context, defined below:
+$
+  consistent(A, phi) &= consistent(phi) and phi(A)
+$
+
+Consistency $kappa ::= ctrue | cfalse$ affects the types we can introduce in existential binders $exists alpha. C$ -- namely if we are in a consistent context, then it follows that the type assigned to $alpha$ must be consistent. 
+
+If our assumptions are $cfalse$, then we are in an _absurd_ context. Absurdity is handled specially since our solver cannot handle unification under an _absurd_ context without incompleteness. The only constraint satisfiable in an absurd context is $cabsurd$.
 
 An _environment_ $rho$ is a partial function from expression variables $x$ to _ground type schemes_ $gs$ -- a set of consistency and ground type pairs $kappa tack gt$, known as a _ground instance_, which reflects that the scheme was instantiated to $gt$ under the consistency $kappa$. 
 
 
-The satisfiability judgement for constraints $kappa; phi; rho tack C$ states that _in the environment $rho$ with consistency $kappa$, the assignment $phi$ satisfies the constraint $C$_. 
+The satisfiability judgement for constraints $A_cfalse; phi; rho tack C$ states that _in the environment $rho$ with assumptions $A_cfalse$, the assignment $phi$ satisfies the constraint $C$_. 
 
-
-#judgement-box($kappa, phi, rho tack.r C $)
+#judgement-box($A_cfalse, phi, rho tack.r C $)
 $
   #v2
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack.r ctrue$, 
+      $A, phi, rho tack.r ctrue$, 
       "",
       name: [(True)]
     )
@@ -396,9 +415,9 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack.r C_1 and C_2$,
-      $kappa, phi, rho tack.r C_1$,
-      $kappa, phi, rho tack.r C_2$,
+      $A, phi, rho tack.r C_1 and C_2$,
+      $A, phi, rho tack.r C_1$,
+      $A, phi, rho tack.r C_2$,
       name: [(Conj)]
     )
   )
@@ -408,9 +427,9 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack.r exists alpha. C$, 
-      $kappa => consistent(gt)$, 
-      $kappa, phi[alpha |-> gt], rho tack.r C$,
+      $A, phi, rho tack.r exists alpha. C$, 
+      $consistent(A, phi) => consistent(gt)$, 
+      $A, phi[alpha |-> gt], rho tack.r C$,
       name: [(Exists)]
     )
   )
@@ -419,9 +438,9 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack.r forall alpha. C$, 
+      $A, phi, rho tack.r forall alpha. C$, 
       $forall gt$, 
-      $kappa and consistent(gt), phi[alpha |-> gt], rho tack.r C$, 
+      $A, phi[alpha |-> gt], rho tack.r C$, 
       name: [(Forall)]
     )
   )
@@ -430,7 +449,7 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack.r alpha_1 = alpha_2$,
+      $A, phi, rho tack.r alpha_1 = alpha_2$,
       $phi(alpha_1) = phi(alpha_2)$, 
       name: [(Equal)]
     )
@@ -440,7 +459,7 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack.r psi subset.eq alpha$,
+      $A, phi, rho tack.r psi subset.eq alpha$,
       $phi(psi) subset.eq phi(alpha)$, 
       name: [(Sub)]
     )
@@ -450,8 +469,9 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack.r A ==> C$, 
-      $kappa and phi(A), phi, rho tack.r C$, 
+      $A_1, phi, rho tack.r A_2 ==> C$, 
+      $A_1 and A_2, phi, rho tack.r C$, 
+      $tack.double A_1 and A_2$,
       name: [(Impl)]
     )
   )
@@ -460,8 +480,29 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack cdef x : sigma cin C$, 
-      $kappa, phi, rho[x |-> (phi, rho) sigma] tack C$, 
+      $A_1, phi, rho tack.r A_2 ==> C$, 
+      $cfalse, phi, rho tack C$, 
+      $not (tack.double A_1 and A_2)$, 
+      name: [(ImplAbsurd)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $cfalse, phi, rho tack.r cabsurd$, 
+      $$, 
+      name: [(Absurd)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $A, phi, rho tack cdef x : sigma cin C$, 
+      $A, phi, rho[x |-> (A, phi, rho) sigma] tack C$, 
       name: [(Def)]
     )
   )
@@ -470,8 +511,8 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack x <= alpha$, 
-      $kappa tack phi(alpha) in rho(x)$, 
+      $A, phi, rho tack x <= alpha$, 
+      $consistent(A, phi) tack phi(alpha) in rho(x)$, 
       name: [(VarInst)]
     )
   )
@@ -481,8 +522,8 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack sigma <= alpha$, 
-      $kappa tack phi(alpha) in (phi, rho) sigma$, 
+      $A, phi, rho tack sigma <= alpha$, 
+      $consistent(A, phi) tack phi(alpha) in (A, phi, rho) sigma$, 
       name: [(SchemeInst)]
     )
   )
@@ -491,9 +532,9 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack clet x : sigma cin C$, 
-      $kappa, phi, rho tack exists sigma$, 
-      $kappa, phi, rho[x |-> (phi, rho) sigma] tack C$, 
+      $A, phi, rho tack clet x : sigma cin C$, 
+      $A, phi, rho tack exists sigma$, 
+      $A, phi, rho[x |-> (A, phi, rho) sigma] tack C$, 
       name: [(Let)]
     )
   ) 
@@ -502,22 +543,32 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack exists (forall overline(alpha), overline(beta). C => gamma)$, 
-      $kappa, phi, rho tack forall overline(alpha). exists overline(beta). C$, 
+      $A, phi, rho tack exists (forall overline(alpha), overline(beta). C => gamma)$, 
+      $A, phi, rho tack forall overline(alpha). exists overline(beta). C$, 
       name: [(SchemeSat)]
     )
   )
 $
 
-The interpretation of the constrained type scheme $cforall(overline(alpha : f), C, gamma)$ in the assignment $phi$ contains all ground instances $kappa' tack (phi,phi')(gamma)$ which satisfy $C$, where $phi$ is extended with a disjoint assignment $phi'$ for the $overline(alpha)$, that has to pick only consistent ground variables when $kappa'$ is consistent:
+We say an assignment $phi$ is _extended_ to $phi'$ for $overline(alpha)$, written $phi <= phi' : overline(alpha)$, if $phi'$ is equivalent to the concatentation of $phi$ and some $phi''$ where $dom(phi'') = overline(alpha)$. 
+
 $
-  (phi, rho)(cforall(overline(alpha : f), C, gamma)) = { kappa' tack (phi,phi')(gamma) :
-    dom(phi') = overline(alpha)
-    and kappa' => consistent(phi')
-    and kappa', (phi, phi'), rho tack C }
+  #proof-tree(
+    rule(
+      $phi <= (phi, phi') : overline(alpha)$, 
+      $dom(phi') = overline(alpha)$
+    )
+  )
 $
 
-#comment[Note: It is odd that the interpretation of schemes doesn't include the consistency at which is was defined. The reasoning behind this that consistency can only decrease and that satisfiability is stable under consistent (i.e. a constraint satisfiable under true is satisfiable under false). Since consistency is referenced in the instance, this ensures that under a 'true' context, the scheme must be satisfable under a true assignment. The let constraint ensures that the scheme must have some instances under the current satisfiability using the $exists sigma$ judgement. This allows us to have the standard let = def + satisfiability check equivalence.]
+The interpretation of the constrained type scheme $cforall(overline(alpha : f), C, gamma)$ in the assignment $phi$ contains all ground instances $kappa tack phi'(gamma)$ which satisfy $C$, where $phi$ is extended to $phi'$ for the $overline(alpha)$. The consistency of the ground instance $kappa$ is the consistency of the assumptions $A$ and the extended ground assignment $phi'$. 
+
+$
+  (A, phi, rho)(cforall(overline(alpha : f), C, gamma)) = { consistent(A, phi') tack phi'(gamma) :
+    phi <= phi' : overline(alpha)
+    and A, phi', rho tack C }
+$
+
 
 A constraint $C_1$ entails $C_2$, written $C_1 tack.double C_2$, if every context that satisfies $C_1$ also satisfies $C_2$. Similarly, equivalence $C_1 equiv C_2$ holds if the property is bidirectional.
 

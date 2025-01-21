@@ -29,6 +29,7 @@
 #let clet = textsf("let")
 #let cis = textsf("is")
 #let cforall(alphas, C, gamma) = $forall #alphas . space #C => #gamma$
+#let cabsurd = textsf("absurd")
 
 // Judgements
 #let ok = textsf("ok")
