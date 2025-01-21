@@ -9,10 +9,11 @@
 #let tint = textsf("int")
 #let tstring = textsf("string")
 #let tbot = math.op($bot$)
+#let tbound = $diamond.small$
 
 #let tformer = textsf("F")
 #let tforall(alpha) = $forall #alpha. space$
-#let tforallb(alpha, bound) = $forall (#alpha >= #bound). space$
+#let tforallb(bound_kind: tbound, alpha, bound) = $forall (#alpha #bound_kind #bound). space$
 
 // Expressions
 #let erefl = textsf("Refl")

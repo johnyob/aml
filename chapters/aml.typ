@@ -29,10 +29,10 @@ _Types_. The syntax of types is as follows:
   syntax-rule(name: [Type Constructors], $tformer ::= dot arrow dot | tint | dot = dot | ...$),
   syntax-rule(name: [(Deep) Types], $tau ::= alpha | overline(tau) tformer | tau approx tau | tbot$),
   syntax-rule(name: [(Shallow) Types], $rho ::= alpha | overline(alpha) tformer$),
-  syntax-rule(name: [(Shallow) Ambivalent Types], $psi ::= rho | psi approx alpha$),
-  syntax-rule(name: [(Shallow) Quantifier Bounds], $Q ::= psi | tbot$),
-  syntax-rule(name: [(Shallow) Type Schemes], $sigma ::= alpha | tforallb(alpha, Q) sigma$),
-  syntax-rule(name: [Contexts], $Gamma ::= &dot | Gamma, alpha >= Q | Gamma, tau = tau | Gamma, x: sigma$),
+  syntax-rule(name: [(Shallow) Ambivalent Types], $psi ::= tbot | rho | psi approx alpha$),
+  syntax-rule(name: [Quantifier Bounds], $tbound ::= op(>=) op(|) op(=)$),
+  syntax-rule(name: [(Shallow) Type Schemes], $sigma ::= alpha | tforallb(alpha, psi) sigma$),
+  syntax-rule(name: [Contexts], $Gamma ::= &dot | Gamma, alpha tbound psi | Gamma, tau = tau | Gamma, x: sigma$),
 )
 
 
@@ -66,6 +66,8 @@ The shallow types are restricted forms of types. We introduce shallow types to a
 // Schemes
 _Type schemes_ are also affected by the notion of _sharing_. Instead of a normal quantifier ($tforall(alpha) sigma$), we introduce a _flexible bounded quantifier_ ($alpha >= Q$). This is because on instantiation, _any_ type can be made ambivalent (provided it is consistent in the context), thus the type $Q$ represents a _lower bound_. We write $tforall(alpha) sigma$ for $tforallb(alpha, tbot) sigma$.
 
+#comment[TODO: Update text here to match rigid quantifier bounds as well -- credit MLF]
+
 // Contexts
 Contexts bind program variables to type schemes, introduce _variable bounds_, and store type equations $tau = tau'$.
 They are ordered and duplicates are disallowed. We write $Gamma, Gamma'$ for the concatenation of two contexts (assuming disjointness holds).
@@ -78,7 +80,7 @@ $
   fv(overline(tau) tformer) &= union.big_i fv(tau_i) \
   fv(tau_1 approx tau_2) &= fv(tau_1) union fv(tau_2) \
   fv(bot) &= emptyset \
-  fv(forall (alpha >= Q). sigma) &= (fv(sigma) \\ { alpha }) union fv(Q)
+  fv(forall (alpha tbound psi). sigma) &= (fv(sigma) \\ { alpha }) union fv(psi)
 $
 
 *Remark 1* (Abuse of notation). _When defining functions or typing judgments using structural induction on syntax, we exploit the hierarchical nature of our syntax, where the set of sentances of one grammar are a subset of another. In such cases, the definitions for the functions / judgements naturally extend without requiring explicit repetition of cases. For example, the definition of free variables on types extends to shallow types since all shallow types are types._
@@ -129,9 +131,9 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack tforallb(alpha, Q) sigma$,
-      $Gamma, alpha >= Q tack sigma ok$,
-      $Gamma tack Q ok$,
+      $Gamma tack tforallb(alpha, psi) sigma$,
+      $Gamma, alpha >= psi tack sigma ok$,
+      $Gamma tack psi ok$,
       $alpha \# Gamma$
     )
   )
@@ -180,10 +182,22 @@ $
 
   #h1
 
+  // Any rigid bound can be used in provable equality
   #proof-tree(
     rule(
       $Gamma tack alpha = psi$,
-      $alpha >= psi in Gamma$
+      $alpha = psi in Gamma$
+    )
+  )
+
+  #h1 
+
+  // We can use flexible bounds in provable equality as long as they're not empty
+  #proof-tree(
+    rule(
+      $Gamma tack alpha = psi$,
+      $alpha >= psi in Gamma$,
+      $psi eq.not tbot$
     )
   )
 
@@ -232,9 +246,9 @@ $
 
   #proof-tree(
     rule(
-      $Gamma, alpha >= Q ok$,
+      $Gamma, alpha tbound psi ok$,
       $Gamma ok$,
-      $Gamma tack Q ok$,
+      $Gamma tack psi ok$,
       $alpha \# Gamma$
     )
   )
@@ -273,12 +287,8 @@ $
   floor(tau_1 approx tau_2) &= Delta_1, Delta_2, beta >= alpha_1 approx alpha_2 triangle.r.small beta && "fresh" beta \ 
   &&&"where" floor(tau_i) = Delta_i triangle.r.small alpha_i \ 
   floor(tbot) &= beta = tbot triangle.r.small beta \
-  &#comment[^ This doesn't quite work]
-  // We morally want to say that bot translate into a variable + something else 
-  // But we need some say to say that variable must be provably equal to bot instead must be greater than bot (which every type is trivially)
-  // One idea is that we mimic MLF more and we use a 'rigid bound' for quantifiers as well -- which simply states that the type must be equivalent (unit, idemp, comm, assoc)
 $
-where $Delta ::= dot | Delta, alpha >= Q$. We write $forall floor(tau)$ for the type scheme $forall Delta. alpha$.
+where $Delta ::= dot | Delta, alpha tbound psi$. We write $forall floor(tau)$ for the type scheme $forall Delta. alpha$.
 
 The typing rules of #aml have a similar shape to #ml, but differ in unusal ways due to _sharing_. (Var), (Let), (TFun) and (Sub) are standard.
 
@@ -339,9 +349,9 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack e : tforallb(alpha, Q) sigma$,
-      $Gamma, alpha >= Q tack e : sigma$,
-      $Gamma tack Q ok$,
+      $Gamma tack e : tforallb(alpha, psi) sigma$,
+      $Gamma, alpha tbound psi tack e : sigma$,
+      $Gamma tack psi ok$,
       $alpha\#Gamma$,
       name: [(Gen)]
     )
@@ -352,8 +362,8 @@ $
   #proof-tree(
     rule(
       $Gamma tack e : alpha$,
-      $Gamma, beta >= Q tack e : alpha$,
-      $Gamma tack Q ok$,
+      $Gamma, beta tbound psi tack e : alpha$,
+      $Gamma tack psi ok$,
       $alpha eq.not beta$,
       $beta \# Gamma$,
       name: [(Bind)]
@@ -415,7 +425,7 @@ $
 $
 
 
-#comment[I prefer this formulation of $<=$ on types (since it matches our approach on ground types). But it is less clear that we preserve sharing. Namely It'd be nice to prove that derivation of the form $tau <= Q$ cannot 'forget' any the ambivalence in $Q$. This is kinda evident in the first case of $<=$ since we're not 'forgetting' $tau_1$ and our $tequivm$ laws ensure we don't mess with the 'form' of $tau_1$]
+#comment[I prefer this formulation of $<=$ on types (since it matches our approach on ground types). But it is less clear that we preserve sharing. Namely It'd be nice to prove that derivation of the form $tau <= psi$ cannot 'forget' any the ambivalence in $psi$. This is kinda evident in the first case of $<=$ since we're not 'forgetting' $tau_1$ and our $tequivm$ laws ensure we don't mess with the 'form' of $tau_1$]
 
 #judgement-box($Gamma tack tau_1 <= tau_2$, $Gamma tack sigma_1 <= sigma_2$)
 
@@ -444,7 +454,7 @@ $
     rule(
       $Gamma tack tau <= alpha$,
       $Gamma tack tau <= psi$,
-      $alpha >= psi in Gamma$
+      $alpha tbound psi in Gamma$
     )
   )
 
@@ -452,9 +462,19 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack tforallb(alpha, Q) sigma <= sigma'$,
+      $Gamma tack #tforallb(bound_kind: $>=$, $alpha$, $psi$) sigma <= sigma'$,
       $Gamma tack sigma[alpha := beta] <= sigma'$,
-      $Gamma tack Q <= beta$
+      $Gamma tack psi <= beta$
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Gamma tack #tforallb(bound_kind: $=$, $alpha$, $psi$)sigma <= sigma'$, 
+      $Gamma tack sigma[alpha := beta] <= sigma'$, 
+      $beta = psi in Gamma$
     )
   )
 $
