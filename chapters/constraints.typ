@@ -16,6 +16,10 @@ The syntax is given below. For composition we have $ctrue$, the trivially true c
 The equality constraint $alpha = beta$ asserts that the types $alpha$ and $beta$ are equivalent. The _sub_ constraint $psi subset.eq alpha$ asserts that $alpha$ 'contains' the structure of the type $psi$, the definition of 'contains' is somewhat involved (and thus covered later in the section [??]). The existential constraint $exists alpha. C$ that binds the _flexible_ ($circle.small.filled$) type variable $alpha$ in $C$. The universal constraint $forall alpha. C$ that binds the _rigid_ ($star$) type variable $alpha$ in C. 
 The _implication_ constraint $A ==> C$ that assumes the assumptions $A$ hold in $C$. The instance constraint $x <= alpha$ (and substitued form $sigma <= alpha$) asserts that the scheme of $x$ can be instantiated to the type $alpha$. The definition and let constraints $cdef x : sigma cin C$ and $clet x : sigma cin C$ bind the scheme $sigma$ to $x$ in $C$, with the $clet$ constraint additionally asserting that $sigma$ has one or more instances. 
 
+#let cforall(alphas, C, gamma) = $forall #alphas . space #C => #gamma$
+#let fflex = $upright(f)$
+#let frigid = $upright(r)$
+
 Constraints equivalent modulo alpha-renaming of all binders, of both type and expression variables.
 #syntax(
   syntax-rule(name: [Type Variables], $alpha, beta, gamma$),
@@ -27,9 +31,10 @@ Constraints equivalent modulo alpha-renaming of all binders, of both type and ex
   | &clet x : sigma cin C 
   $),
 
+  syntax-rule(name: [Deep Types], $tau ::= alpha | overline(tau) tformer$),
   syntax-rule(name: [Shallow Types], $psi ::= alpha | overline(alpha) tformer$), 
 
-  syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= forall overline(alpha), overline(beta). C => gamma $), 
+  syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= cforall(overline(alpha : f), C, gamma) $), 
 
   syntax-rule(name: [Assumptions], $A ::= ctrue | A and A | tau = tau$),
   
@@ -39,7 +44,7 @@ Constraints equivalent modulo alpha-renaming of all binders, of both type and ex
 
   syntax-rule(name: [Contexts], $Delta ::= dot | Delta, alpha : f | Delta, x$),
 
-  syntax-rule(name: [Flexibility], $f ::= circle.small.filled | star$),
+  syntax-rule(name: [Flexibility], $f ::= fflex | frigid$),
 )
 
 Our constraint language distinguishes between flexible and rigid type variables in the well-formedness judgement of constraints $Delta tack C ok$. We forbid the occurances of flexible variables in assumptions $A$ and the variable case of shallow types $psi$. Additionally rigid variables are forbidden in the formers of shallow types $psi$. These restrictions are due to limitations in our solver, not our semantics. The well-formedness rules are given below. 
@@ -114,10 +119,19 @@ $
 
   #proof-tree(
     rule(
-      $Delta tack.r psi subset.eq alpha ok$, 
-      $Delta tack.r psi ok$, 
-      $alpha in dom(Delta)$, 
-      name: [(Sub)]
+      $Delta tack.r alpha subset.eq beta ok$, 
+      $alpha : frigid in Delta$, 
+      name: [(Sub-rigid)]
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Delta tack.r overline(alpha) tformer subset.eq beta ok$, 
+      $overline(alpha : fflex) in dom(Delta)$, 
+      name: [(Sub-structure)]
     )
   )
 
@@ -126,7 +140,7 @@ $
   #proof-tree(
     rule(
       $Delta tack A ==> C ok$, 
-      $Delta tack A ok$, 
+      $"rigid"(Delta) tack A ok$, 
       $Delta tack C ok$, 
       name: [(Impl)]
     )
@@ -181,11 +195,11 @@ $
 
   #proof-tree(
     rule(
-      $Delta tack forall overline(alpha), overline(beta). C => gamma ok$, 
+      $Delta tack cforall(overline(alpha : f), C, gamma) ok$, 
       $Theta tack C ok$, 
       $gamma in dom(Theta)$,
-      $overline(alpha), overline(beta) \# Delta$, 
-      label: $Theta = Delta, overline(alpha : star), overline(beta : circle.small.filled)$, 
+      $overline(alpha) \# Delta$, 
+      label: $Theta = Delta, overline(alpha : f)$, 
       name: [(Scheme)]
     )
   )
@@ -227,8 +241,8 @@ $
   #proof-tree(
     rule(
       $Delta tack alpha ok$, 
-      $alpha : star in Delta$, 
-      name: [(RtypeVar)]
+      $alpha in dom(Delta)$, 
+      name: [(TypeVar)]
     )
   )
 
@@ -238,34 +252,13 @@ $
     rule(
       $Delta tack overline(tau) tformer ok$,
       $forall i. space Delta tack tau_i ok$, 
-      name: [(RtypeFormer)]
+      name: [(TypeFormer)]
     )
   )
-
-  #v2
-
-  #proof-tree(
-    rule(
-      $Delta tack alpha ok$, 
-      $alpha : star in Delta$,
-      name: [(StypeVar)]
-    )
-  )
-
-  #h1 
-
-  #proof-tree(
-    rule(
-      $Delta tack overline(alpha) tformer ok$, 
-      $forall i. space alpha_i : circle.small.filled in Delta$, 
-      name: [(StypeFormer)]
-    )
-  )
-
 
 $
 
-
+#comment[If we go this way, define what $"rigid"(Delta)$ is.]
 
 == Algebra of Types
 
@@ -287,11 +280,18 @@ $
   ) tformer
 $
 
+#comment[It would make sense to quotient over the idempotent-associative-commutative parts (so $approx$ is set-like), but then manipulate distributivity as an explicit relation still.]
+
 #let anf = textsf("anf")
 #let amb = textsf("amb")
 
-Our equational theory on types gives rise to a normal form for types which we call _ambivalent normal form_ (ANF). This normal form 
-is where we reduce all distributive occurances of a type formers in ambivalent types until we reach "incompatible" formers. The syntax of ANF is given below. 
+There would be several notions of normal forms for distributivity. We could _expand_ types by applying the left-to-right direction, repeatedly duplicating the head type-formers until we get sets of non-ambivalent types. Instead we propose to _reduce_ types by applying the right-to-left direction as much as possible. This gives a notion of normal forms where, in a type of the form $tau_1 approx dots approx tau_n$, any given type-former occurs at most once as the head of a $tau_i$.
+
+This notion of "reduced" normal form coincides with the behavior we expect from the constraint solver, where the decomposition rules during unification will enforce this form of maximal sharing.
+
+#comment[Replace "ANF" by "RNF" below (incl. in the macro).]
+
+We give a syntax to these reduced normal forms (RNF) below.
 The function $anf$ for converting types to ANFs is straightforward, if relatively tedious. We make use of auxiliary functions $amb(N, N)$ which relies on the ability
 to re-order normal forms using commutativity. 
 
@@ -357,14 +357,14 @@ $
   )
 $ 
 Note that this is equivalent to $amb(gt_1, gt_2) = gt_2$. 
-A ground type $gt$ is consistent, written $consistent(gt)$, iff it doesn't contain $approx$. 
+A ground type $gt$ is consistent, written $consistent(gt)$, iff it doesn't contain $approx$. The name comes from the fact that if a ground type is in reduced normal form and still contains type subpexression of the form $gt_1 approx gt_2$, then $gt_1$ and $gt_2$ are necessarily incompatible ground types.
 
 
 == Semantics
 
 Our constraints are interpreted under the model of ground types. A ground (or semantic) assignment $phi$ is a partial function from type variables $alpha$ to ground types $gt$. 
 
-Implication constraints introduce equalities. These are taken into account using a _consistency bit_ $kappa$. If we're in a consistent context, then it follows that only reflexive equalities $gt = gt$ have been introduced. Otherwise we're in an inconsistent context. Consistency affects the types we can introduce in existential binders $exists alpha. C$ -- namely if we're in a consistent context, then it follows that the type assigned to $alpha$ must be consistent. 
+Implication constraints introduce equalities. These are taken into account using a _consistency bit_ $kappa$. If we are in a consistent context, then it follows that only reflexive equalities $gt = gt$ have been introduced. Otherwise we are in an inconsistent context. Consistency affects the types we can introduce in existential binders $exists alpha. C$ -- namely if we are in a consistent context, then it follows that the type assigned to $alpha$ must be consistent. 
 
 An _environment_ $rho$ is a partial function from expression variables $x$ to _ground type schemes_ $gs$ -- a set of consistency and ground type pairs $kappa tack gt$, known as a _ground instance_, which reflects that the scheme was instantiated to $gt$ under the consistency $kappa$. 
 
@@ -501,16 +501,13 @@ $
   )
 $
 
-
-We interpret the constrained type scheme $forall overline(alpha), overline(beta). C => gamma$ under the assignment $phi$ and environment $rho$ as the set of ground instances $kappa' tack phi'(gamma)$ if the assignments $phi$ and $phi'$ are equal modulo $overline(alpha), overline(beta)$ under consistency $kappa'$, denoted $phi scripts(=)_(\\ overline(alpha), overline(beta))^(kappa') phi'$, and $phi'$ satisfies $C$:
+The interpretation of the constrained type scheme $cforall(overline(alpha : f), C, gamma)$ in the assignment $phi$ contains all ground instances $kappa' tack (phi,phi')(gamma)$ which satisfy $C$, where $phi$ is extended with a disjoint assignment $phi'$ for the $overline(alpha)$, that has to pick only consistent ground variables when $kappa'$ is consistent:
 $
-  (phi, rho)(forall overline(alpha), overline(beta). C => gamma) = { kappa' tack phi'(gamma) : phi scripts(=)_(\\ overline(alpha), overline(beta))^(kappa') phi' and kappa', phi', rho tack C}
+  (phi, rho)(cforall(overline(alpha : f), C, gamma)) = { kappa' tack (phi,phi')(gamma) :
+    dom(phi') = overline(alpha)
+    and kappa' => consistent(phi')
+    and kappa', (phi, phi'), rho tack C }
 $
-where assignments $phi$ and $phi'$ are said to be equal modulo $overline(alpha)$ under $kappa$, if
-$
-  forall beta in (dom(phi) sect dom(phi')) \\ overline(alpha). space phi(beta) = phi'(beta) \ and forall alpha in overline(alpha). space kappa ==> consistent(phi'(alpha))
-$
-
 
 #comment[Note: It is odd that the interpretation of schemes doesn't include the consistency at which is was defined. The reasoning behind this that consistency can only decrease and that satisfiability is stable under consistent (i.e. a constraint satisfiable under true is satisfiable under false). Since consistency is referenced in the instance, this ensures that under a 'true' context, the scheme must be satisfable under a true assignment. The let constraint ensures that the scheme must have some instances under the current satisfiability using the $exists sigma$ judgement. This allows us to have the standard let = def + satisfiability check equivalence.]
 
