@@ -7,6 +7,7 @@
 // Types
 #let tint = textsf("int")
 #let tstring = textsf("string")
+#let tlist = textsf("list")
 
 #let tformer = textsf("F")
 #let tforall(alpha) = $forall #alpha. space$
@@ -36,3 +37,11 @@
 // Functions
 #let fv = textsf("fv")
 #let arity = textsf("arity")
+
+#let consistent = textsf("consistent")
+
+// Constraint semantics
+#let gt = math.upright(math.bold("t"))
+#let gs = math.upright(math.bold("s"))
+#let fflex = $upright(f)$
+#let frigid = $upright(r)$
