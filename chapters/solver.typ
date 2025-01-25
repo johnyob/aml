@@ -4,6 +4,252 @@
 #import "@preview/curryst:0.3.0": rule, proof-tree
 #import "cmon.typ": *
 
+
+We define the constraint solver as a stack machine. Our machine is defined in terms of a transition relation on states of the form $(S, U, C)$, consisting of a stack $S$, a unification problem $U$, and an in-progress constraint $C$. 
+
+#let sscope = $phi.alt$
+#let smineq = textsf("minEqs")
+#let seq = textsf("Eqs")
+
+_Stacks_. The stack $S$ represents the context in which $U and C$ appears. It contains the bindings for flexible and rigid type variables, term variables, and _assumptions_, that may appear in $U and C$. 
+Our states are closed, meaning $S$ must bind all free variables in $U and C$. 
+
+#syntax(
+  syntax-rule(
+    name: [Frames], 
+    $F ::= &square and C |  exists alpha. square | forall a. square \ 
+    | &cdef x : sigma cin square \
+    | &clet x : cforall(#($overline(alpha), overline(a)$), square, tau)  cin C \
+    | &clet x : hat(sigma) cin square \
+    | &phi.alt : A  ==> square
+    $
+  ), 
+
+
+  syntax-rule(
+    name: [Stacks], 
+    $S ::= dot | S :: F$
+  ),
+)
+#let tformera = $op(tformer)^a$
+#let sptformera = $space tformera$
+
+// Holes
+The stack additionally indicates how to continue after $C$ has been solved. The different forms of stack frames directly correspond to those constraints with at least one subconstraint. The overall stack can then be seen as a constraint with a hole in which $C$ is plugged.
+
+
+// Rigid variables + Skolem constructors 
+Unlike Pottier and Rémy's presentation for universal quantification in [??], our solver differentiates flexible and rigid type variables, with rigid ones encoded as a _Skolem constructors_ [??]. We write $tformera$ for either a type constructor $tformer$ or a Skolem constructor $a$. 
+Additionally we treat Skolem constructors as nullary type constructors.
+
+// Explaination on assumption names
+In implication frames $sscope : A ==> square$, we annotate the assumptions $A$ with a name $sscope$ to be able to refer to it during unification and when checking whether an introduced assumption escapes its _scope_. This not only improves the formalisation but better matches our implementation which uses integers to represent scopes [??]. 
+
+_Unification Problems_.  Our constraints are eventually reduced to equations on first-order terms (solved under a mixed prefix). We express these reduced constraints as _unification problems_ $U$, which form a subset of constraints. We define _unification_ as a (non-deterministic) transition relation on _unification problems_. 
+
+
+#let umultieq = $epsilon.alt$
+#let umultilb = $eta$
+#let umulti(phi, lb, eq) = $#phi tack #lb subset.eq #eq$
+$
+  U &::= ctrue | cfalse | U and U | exists alpha. U | umulti(Phi, umultilb, umultieq) \
+  umultieq &::= dot | umultieq = tau \ 
+  eta &::= dot | eta union.sq tau \
+  tau &::= alpha | overline(tau) tformera | tau approx tau\
+  tformera &::= tformer | a  
+$
+
+// Multi-equations 
+Following Pottier and Remy, we replace ordinary binary atomic constraints such as equality $tau_1 = tau_2$ and containment $tau_1 subset.eq tau_2$ with a _mutli-relation_. A _multi-relation_ $Phi tack umultilb subset.eq umultieq$ is a 
+an equality between an arbitrary number of types $umultieq$ with an arbitrary number of containment relations $eta$ that are associated with a single upper-bound that relies on the assumptions $Phi$. The interpretation of a multi-equation is given by 
+$
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack Phi tack umultieq supset.sq.eq eta$, 
+      $exists gt$, 
+      $consistent(Phi) ==> consistent(gt)$, 
+      $forall tau in umultieq. space phi(tau) = gt$, 
+      $forall tau^frigid in eta. space phi^frigid (tau^frigid) subset.eq gt$
+    )
+  )
+$
+That is, $phi$ satisfies $umulti(Phi, umultilb, umultieq)$ if all members of $umultieq$ are mapped to a single ground type by $phi$ which contains all types in $umultilb$. 
+
+
+// Solver contexts and well-formedness
+#let srv = textsf("rv")
+#let sfv = textsf("fv")
+#let sass = textsf("assm")
+#let stmv = textsf("tmv")
+#let styv = textsf("tyv")
+#let sc = textsf("c")
+
+We write $stmv(S)$ and $styv(S)$ for the term and type variables (flexible or rigid) bound in $S$. Similarly, we write $srv(S)$, 
+$sfv(S)$, and $sass(S)$ for the rigid variables, flexible variables and _named assumptions_ in the stack $S$, respectively. We write $srv(S), sfv(S), sass(S)$ for the context synthesized from $S$ ($sc(S)$). 
+
+$
+  #comment[TODO -- tedious definition]
+$
+
+In order for the state $(S, U, C)$ to be well-formed ($tack (S, U, C) ok$), we require that $S$ is well-formed, $U$ is well-formed in $sc(S)$ and $C$ is well-formed in $srv(S), sfv(S)$. 
+
+#judgement-box($tack S ok$)
+$
+  #comment[TODO -- also a bit tedious] 
+$
+
+To check the well-formedness of constraints ambedded in stack frames, ...
+
+== Solver Rules 
+
+We now introduce the rules of the constraint solver itself. 
+The solver consists of a (non-deterministic) state rewriting system, given in Figure ??. We assume re-writings are performed modulo $alpha$-renaming and . 
+
+
+A constraint is satisfiable in a given context if the solver reaches a state of the form ($cal(X), hat(U), ctrue$) where $cal(X)$ is an existential stack context and $hat(U)$ is a _satisfiable solved form_ of a unification problem from an initial configuration build from $C$ $(square, ctrue, C)$. From such a final state, we can read off a most general solution for the constraint by interpreting $hat(U)$ as a substitution. If the constraint is unsatisfiable, the solver ... . 
+
+
+#let occurs = $textsf("occurs in")$
+
+_Unification_. 
+The relation $U -->_S U'$ describes the unification algorithm in the _context_ $S$. We often omit $S$ when it is unncessary. 
+We say $alpha occurs beta$ with respect to $U$ if $U$
+contains a multi-equation of the form $tau subset.sq.eq alpha ...$ 
+where $tau$ is a non-variable type satisfying $beta in fv(tau)$. 
+A unification problem $U$ is cyclic if there exists $alpha$ such that $alpha occurs alpha$ wrt. $U$. 
+
+A _solved form_ $hat(U)$ is either $cfalse$ or $exists overline(alpha). and.big_i epsilon.alt_i$ where 
+every multi-equation contains at most one non-variable type (either in a equality or lower-bound position), no two multi-equations share a variable, $hat(U)$ is not cyclic, and $overline(alpha) \# overline(beta)$.  Similarly, a _solved scheme_ $hat(sigma)$ is a constrainted type scheme of the form $cforall(overline(alpha : f), hat(U), beta)$. 
+
+
+#let tformerga = $space textsf("G")^a$
+$
+  // Common rules
+  (exists alpha. U_1) and U_2 &--> exists alpha. U_1 and U_2 &#h(2cm)&"if" alpha \# U_2 \ 
+
+  U &--> cfalse 
+  &&"if" U "is cyclic" \ 
+
+  cal(U)[cfalse] &--> cfalse \
+
+  cal(U)[U] &--> cal(U)[U']  
+  &&"if" U --> U' \ 
+
+  U and ctrue &--> U \ 
+
+  U_1 and U_2 &--> U_2 and U_1 \
+
+  // Merge rules
+  Phi tack alpha = alpha = epsilon.alt supset.sq.eq eta &--> Phi tack alpha = epsilon.alt supset.sq.eq eta \ 
+
+
+  Phi tack alpha = epsilon.alt supset.sq.eq eta and Phi' tack alpha = epsilon.alt' supset.sq.eq eta' &--> Phi union Phi' tack alpha = epsilon.alt = epsilon.alt' supset.sq.eq eta union.sq eta' \ 
+
+  // Decomposition rules 
+  // Phi tack cal(X)[(tau_1, ..., tau_i, ..., tau_n) tformer] &--> exists alpha. alpha = tau_i and Phi tack cal(X)[(tau_1, ..., alpha, ..., tau_n) tformer] \
+
+
+  // Former-Former 
+  Phi tack umultieq supset.sq.eq psi_1[overline(alpha_1) tformera] union.sq psi_2[overline(alpha_2) tformera] union.sq eta &--> Phi tack umultieq supset.sq.eq (psi_1 approx psi_2) union.sq eta and and.big_i alpha_(1i) = alpha_(2i) \
+
+  // Former-Former Not Equal 
+  Phi tack umultieq supset.sq.eq psi_1[overline(alpha_1) tformera] union.sq psi_2[overline(alpha_2) tformerga] union.sq eta &-->_S Phi union Phi' tack umultieq supset.sq.eq (psi_1 approx psi_2) union.sq eta and and.big alpha_(1i) supset.sq.eq tau_(1i) \ 
+  &#h1 and and.big_j alpha_(2i) supset.sq.eq tau_(2i)  \
+
+  &#h1 "if" tformera eq.not tformerga and Phi' in smineq(S, Phi, overline(tau_1) tformera = overline(tau_2) tformerga) \
+
+  // Clash
+  overline(sscope) tack umultieq supset.sq.eq psi[rho_1] union.sq psi'[rho_2] union.sq eta &-->_S cfalse 
+  \ 
+  &#h1 "if" (and.big seq(S) ==> exists alpha. rho_1 subset.eq alpha and rho_2 subset.eq alpha )equiv cfalse 
+$
+
+
+
+== Metatheory 
+
+
+
+
+
+The constraint solving algorithm is presented as a transition relation $(S, U, C) &--> (S', U', C')$. The rules are split as:
+- Decomposition rules: decomposing $C$ into the stack $S$ or unification problem $U$. 
+- Existential extraction rules: permitting the movement of $exists alpha. square$. 
+- Solving rules: umbrella section for other rules  
+- Pop rules: popping stack frames
+
+// Decomposition rules are:
+// $
+//  (S, U, tau_1 = tau_2) &--> (S, U and tau_1 = tau_2, ctrue) \ 
+
+//  (S, U, C_1 and C_2) &--> (S :: square and C_2, U, C_1) \ 
+
+//  (S, U, exists alpha. C) &--> (S :: exists alpha. square, U, C) &#h(2cm)&"if" alpha \# U \ 
+
+//  (S, U, cmatch alpha cwith [Gamma] f) &--> (S, U and cmatch alpha cwith [Gamma]f, ctrue) \ 
+
+//  (S, U, cdef x : sigma cin C) &--> (S :: cdef x : sigma cin square, U, C) \ 
+
+//  (S, U, x <= tau) &--> (S, U, S(x) <= tau) \ 
+
+//   // Copy the constraint
+
+
+//   // Regions:
+//   //  Previously linear, but 
+//   //  we need to keep gamma alive (non-generalised) s.t 
+//   //  if beta is solved, then we unify the gamma and the instantiated gamma
+//   //  
+//   //  alpha. U and <beta ~> alpha>SU, ret type (variable)
+//   // 
+//   // forall overline(alpha). C <SU> => alpha 
+//   // SU ::= beta ~> alpha | and.big cmatch beta cwith [Gamma]f
+//   // 
+//   // Linear approach:
+//   //   add existentials for alpha that are partially generalised
+//   //   SU is solved outside the let constraint
+//   //   On instantiation (match beta cwith [alpha'](fun _ -> alpha = alpha'))
+//   // 
+//   // Doesn't work! Since if alpha is truly general after beta is determined, this fails (womp)
+//   // 
+
+//  (S, U, (forall overline(alpha), overline(beta arrow.r.squiggly gamma). C => tau) <= tau') &-->  (S, U, exists overline(alpha), overline(gamma). C and tau = tau' )
+// $
+
+// #let append = "++"
+
+// Existential extraction rules are:
+// $
+//   (S, exists alpha. U, C) &--> (S :: exists alpha. square, U, C) &#h(2cm)&"if" alpha \#C \ 
+
+//   (S :: square and C_1 :: exists alpha. square append S', U, C_2) &--> (S :: exists alpha. square :: square and C_1 append S', U, C_2) &&"if" alpha \# C_1 \
+
+//   (S :: cdef x : sigma cin square :: exists alpha. square append S', U, C) &--> (S :: exists alpha. square :: cdef x : sigma cin square append S', U, C) &&"if" alpha \# sigma
+// $
+
+// Solving rules are:
+// $
+//   (S, U, C) &--> (S, U', C) &#h(2cm)&"if" U --> U' \ 
+
+//   (S, U and alpha = tau = epsilon.alt and cmatch alpha cwith [Gamma]f, ctrue) &--> (S, U and alpha = tau = epsilon.alt, f(tau)) &&"if" tau in.not varty\
+
+
+//   (dot, exists alpha. cal(U)[cmatch alpha cwith [Gamma]f], ctrue) &--> (dot, cfalse, ctrue) &&"if not" cal(U)[ctrue] determines alpha
+// $
+
+// Pop rules:
+// $
+  
+//   (S :: square and C, U, ctrue) &--> (S, U, C) \ 
+
+//   (S :: exists alpha. square, U, ctrue) &--> (S, exists alpha. U, ctrue) &#h(1cm)&"if" alpha in fv(U) \ 
+
+//   (S :: exists alpha. square, U, ctrue) &--> (S, U, ctrue) &&"if" alpha \# U \ 
+
+//   (S :: cdef x : sigma cin square, U, ctrue) &--> (S, clo(S, U), ctrue )
+  
+// $
+
 #comment[NOTE: These are rough notes and not complete]
 
 #let sscope = $phi.alt$
