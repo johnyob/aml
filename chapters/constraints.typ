@@ -15,9 +15,9 @@
 
 In this section, we define the constraint language. Following Pottier and Remy [??], our constraint language uses both expression variables and type variables. 
 
-The syntax is given below. For composition we have $ctrue$, the trivially true constraint, and conjunction $C_1 and C_2$. 
-The equality constraint $alpha = beta$ asserts that the types $alpha$ and $beta$ are equivalent. The _sub_ constraint $psi subset.eq alpha$ asserts that $alpha$ 'contains' the structure of the type $psi$, the definition of 'contains' is somewhat involved (and thus covered later in the section [??]). The existential constraint $exists alpha. C$ that binds the _flexible_ ($fflex$) type variable $alpha$ in $C$. The universal constraint $forall alpha. C$ that binds the _rigid_ ($frigid$) type variable $alpha$ in C. 
-The _implication_ constraint $A ==> C$ that assumes the assumptions $A$ hold in $C$. The instance constraint $x <= alpha$ (and substitued form $sigma <= alpha$) asserts that the scheme of $x$ can be instantiated to the type $alpha$. The definition and let constraints $cdef x : sigma cin C$ and $clet x : sigma cin C$ bind the scheme $sigma$ to $x$ in $C$, with the $clet$ constraint additionally asserting that $sigma$ has one or more instances. 
+The syntax is given below. For composition we have $ctrue$, $cfalse$, and conjunction $C_1 and C_2$. 
+The equality constraint $tau_1 = tau_2$ asserts that the types $tau_1$ and $tau_2$ are equivalent under the current assumptions. The existential constraint $exists alpha. C$ that binds the _flexible_ ($fflex$) type variable $alpha$ in $C$. The universal constraint $forall alpha. C$ that binds the _rigid_ ($frigid$) type variable $alpha$ in C. 
+The _implication_ constraint $A ==> C$ assumes the assumptions $A$ hold in $C$. The instance constraint $x <= tau$ (and substitued form $sigma <= tau$) asserts that the scheme of $x$ can be instantiated to the type $tau$. The definition and let constraints $cdef x : sigma cin C$ and $clet x : sigma cin C$ bind the scheme $sigma$ to $x$ in $C$, with the $clet$ constraint additionally asserting that $sigma$ has one or more instances. 
 
 Constraints are considered equivalent modulo alpha-renaming of all binders, of both type and expression variables.
 
@@ -26,19 +26,18 @@ Constraints are considered equivalent modulo alpha-renaming of all binders, of b
 
   syntax-rule(name: [Constraints], $C ::= &ctrue | cfalse | C and C \ 
   | &exists alpha. C | forall alpha. C \ 
-  | &alpha = alpha | psi subset.eq alpha | A ==> C \  
-  | &cdef x : sigma cin C | x <= alpha | sigma <= alpha \ 
+  | &tau_1 = tau_2 | A ==> C \  
+  | &cdef x : sigma cin C | x <= tau | sigma <= tau \ 
   | &clet x : sigma cin C 
   $),
 
-  syntax-rule(name: [Deep Types], $tau ::= alpha | overline(tau) tformer$),
-  syntax-rule(name: [Shallow Types], $psi ::= alpha | overline(alpha) tformer$), 
+  syntax-rule(name: [Types], $tau ::= alpha | overline(tau) tformer$),
 
-  syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= cforall(overline(alpha : f), C, gamma) $), 
+  syntax-rule(name: [Constrained\ Type Schemes], $sigma ::= cforall(overline(alpha : f), C, tau) $), 
 
   syntax-rule(name: [Assumptions], $A ::= ctrue | A and A | tau = tau$),
   
-  syntax-rule(name: [Assignments], $phi ::= dot | phi[alpha |-> gt]$), 
+  syntax-rule(name: [Assignments], $phi ::= dot | phi[alpha : f |-> gt^kappa]$), 
 
   syntax-rule(name: [Environments], $rho ::= dot | rho[x |-> gs]$), 
 
@@ -47,7 +46,7 @@ Constraints are considered equivalent modulo alpha-renaming of all binders, of b
   syntax-rule(name: [Flexibility], $f ::= fflex | frigid$),
 )
 
-Our constraint language distinguishes between flexible and rigid type variables in the well-formedness judgement of constraints $Delta tack C ok$. We forbid the occurances of flexible variables in assumptions $A$ and the variable case of shallow types $psi$. Additionally rigid variables are forbidden in the formers of shallow types $psi$. These restrictions are due to limitations in our solver, not our semantics. The well-formedness rules are given below. 
+Our constraint language distinguishes between flexible and rigid type variables in the well-formedness judgement of constraints $Delta tack C ok$. We forbid the occurances of flexible variables in assumptions $A$. These restrictions are due to limitations in our solver, not our semantics. The well-formedness rules are given below. 
 
 
 #judgement-box($Delta tack.r C ok$)
@@ -109,33 +108,14 @@ $
 
   #proof-tree(
     rule(
-      $Delta tack alpha_1 = alpha_2 ok$, 
-      $alpha_1, alpha_2 in dom(Delta)$, 
+      $Delta tack tau_1 = tau_2 ok$, 
+      $Delta tack tau_1 ok$,
+      $Delta tack tau_2 ok$, 
       name: [(Equal)]
     )
   )
 
   #v2
-
-  #proof-tree(
-    rule(
-      $Delta tack.r alpha subset.eq beta ok$, 
-      $alpha : frigid in Delta$, 
-      name: [(SubVar)]
-    )
-  )
-
-  #h1 
-
-  #proof-tree(
-    rule(
-      $Delta tack.r overline(alpha) tformer subset.eq beta ok$, 
-      $overline(alpha : fflex) in dom(Delta)$, 
-      name: [(SubFormer)]
-    )
-  )
-
-  #h1 
 
   #proof-tree(
     rule(
@@ -146,7 +126,7 @@ $
     )
   )
 
-  #v2 
+  #h1 
 
   #proof-tree(
     rule(
@@ -158,28 +138,29 @@ $
     )
   )
 
-  #h1 
+  #v2 
 
   #proof-tree(
     rule(
-      $Delta tack x <= alpha ok$, 
-      $x, alpha in dom(Delta)$, 
+      $Delta tack x <= tau ok$, 
+      $x in dom(Delta)$,
+      $Delta tack tau ok$, 
       name: [(VarInst)]
     )
   )
 
-  #v2
+  #h1
 
   #proof-tree(
     rule(
-      $Delta tack sigma <= alpha ok$,
+      $Delta tack sigma <= tau ok$,
       $Delta tack sigma ok$, 
-      $alpha in dom(Delta)$, 
+      $Delta tack tau ok$, 
       name: [(SchemeInst)]
     )
   )
 
-  #h1 
+  #v2 
 
   #proof-tree(
     rule(
@@ -191,20 +172,20 @@ $
     )
   ) 
 
-  #v2 
+  #h1 
 
   #proof-tree(
     rule(
-      $Delta tack cforall(overline(alpha : f), C, gamma) ok$, 
+      $Delta tack cforall(overline(alpha : f), C, tau) ok$, 
       $Theta tack C ok$, 
-      $gamma in dom(Theta)$,
+      $Theta tack tau ok$,
       $overline(alpha) \# Delta$, 
       label: $Theta = Delta, overline(alpha : f)$, 
       name: [(Scheme)]
     )
   )
 
-  #h1
+  #v2
 
   #proof-tree(
     rule(
@@ -214,7 +195,7 @@ $
     )
   )
 
-  #v2
+  #h1
 
   #proof-tree(
     rule(
@@ -225,7 +206,7 @@ $
     )
   )
 
-  #h1
+  #v2
 
   #proof-tree(
     rule(
@@ -236,7 +217,7 @@ $
     )
   )
 
-  #v2
+  #h1
 
   #proof-tree(
     rule(
@@ -270,88 +251,126 @@ $
   (Delta, x)_(| f) &= Delta_(| f), x
 $
 
-== Algebra of Types
+// == Algebra of Types
 
-We now define the the algebra of types, that is their syntax and semantic interpretation. The grammar of types $tau$ is defined as:
+// We now define the the algebra of types, that is their syntax and semantic interpretation. The grammar of types $tau$ is defined as:
+// $
+//   tau ::= alpha | overline(tau) tformer | tau approx tau
+// $
+
+// Let $cal(S)$ be a _signature_ for type formers, defining an arity function $arity_cal(S)$ mapping type formers $tformer$ to their arity $n in NN$. A type $tau$ is well-formed in the context of the signature $cal(S)$, written $cal(S) tack tau$, if each occurance of the type former $overline(tau') tformer$ has the correct arity $|overline(tau')| = arity_cal(S)(tformer)$.  
+
+// Our algebra is associated with a equational theory $E(equiv)$ defined by the following set of axioms:
+
+// $
+//   tau approx tau &equiv tau \
+//   tau_1 approx tau_2 &equiv tau_2 approx tau_1 \
+//   tau_1 approx (tau_2 approx tau_3) &equiv (tau_1 approx tau_2) approx tau_3 \
+//   (tau_1, ..., tau_2 approx tau_2^', ..., tau_n) tformer &equiv (tau_1, ..., tau_2, ..., tau_n) tformer approx (
+//     tau_1, ..., tau_2^', ..., tau_n
+//   ) tformer
+// $
+
+// #comment[It would make sense to quotient over the idempotent-associative-commutative parts (so $approx$ is set-like), but then manipulate distributivity as an explicit relation still.]
+
+// #let rnf = textsf("rnf")
+// #let amb = textsf("amb")
+
+// There would be several notions of normal forms for distributivity. We could _expand_ types by applying the left-to-right direction, repeatedly duplicating the head type-formers until we get sets of non-ambivalent types. Instead we propose to _reduce_ types by applying the right-to-left direction as much as possible. This gives a notion of normal forms where, in a type of the form $tau_1 approx dots approx tau_n$, any given type-former occurs at most once as the head of a $tau_i$.
+
+// This notion of "reduced" normal form coincides with the behavior we expect from the constraint solver, where the decomposition rules during unification will enforce this form of maximal sharing.
+
+// We give a syntax to these reduced normal forms (RNF) below.
+// The function $rnf$ for converting types to RNFs is straightforward, if relatively tedious. We make use of auxiliary functions $amb(N, N)$ which relies on the ability
+// to re-order normal forms using commutativity. 
+
+// $
+//   A &::= alpha | overline(N) tformer #h1 N &::= A | N approx A
+// $
+
+// Since the grammars of $A$ and $N$ define a subsets of types, an equational theory is also induced on them by $E(equiv)$. 
+
+// #judgement-box($rnf(tau) : N$) 
+// $
+//   rnf(alpha) &= alpha \ 
+//   rnf(overline(tau) tformer) &= overline(rnf(tau)) tformer \ 
+//   rnf(tau_1 approx tau_2) &= amb(rnf(tau_1), rnf(tau_2))
+// $
+// #judgement-box($amb(N, N) : N$) 
+// $
+//   amb(N, alpha) &= cases(
+//     N &"if" alpha in N, 
+//     N approx alpha #h1&"otherwise"
+//   ) \ 
+
+//   amb(N_1, overline(N_2) tformer) &= cases(
+//     N'_1 approx overline(amb(N'_2, N_2)) tformer #h1&"if" N_1 equiv N'_1 approx overline(N'_2) tformer or N_1 = overline(N'_2) tformer,
+//     N_1 approx overline(N_2) tformer &"otherwise"
+//   )
+// $
+
+// #comment[TODO: Explain why RNF is useful -- what problem does it solve]
+
+
+
+// *Semantics*. We now formally define the semantic interpretation of types. Informally, the model consists of ground normal forms. A ground (or semantic) type $gt$ is defined by the grammar:
+// #let ga = math.upright(math.bold("a"))
+// $
+//   ga ::= overline(gt) tformer #h1 gt ::= ga | gt approx ga 
+// $
+
+// We have the additional constraint that for all ground types, $rnf(gt) = gt$. That is to say the type is fully normalized. 
+// The interpretation of a type $tau$, under the ground assignment $phi$, written $phi(tau)$ is defined by:
+// $
+//   phi(alpha) &= phi(alpha) \ 
+//   phi(overline(tau) tformer) &= overline(phi(tau_i)) tformer \
+//   phi(tau_1 approx tau_2) &= amb(phi(tau_1), phi(tau_2))
+// $
+
+// Having defined the interpretation of types, we may now define what it means for a type $tau_3$ to _contain_ a type $tau_1$. 
+// We do so by lifting the definition of containment on semantic types $gt_1 subset.eq gt_3$:
+// $
+//   #proof-tree(
+//     rule(
+//       $gt subset.eq gt$,
+//     )
+//   )
+
+//   #h1 
+
+//   #proof-tree(
+//     rule(
+//       $gt_1 subset.eq gt_3$, 
+//       $(gt_1 approx gt_2) equiv gt_3$
+//     )
+//   )
+// $ 
+// Note that this is equivalent to $amb(gt_1, gt_2) = gt_2$. 
+// A ground type $gt$ is consistent, written $consistent(gt)$, iff it doesn't contain $approx$. The name comes from the fact that if a ground type is in reduced normal form and still contains type subpexression of the form $gt_1 approx gt_2$, then $gt_1$ and $gt_2$ are necessarily incompatible ground types.
+
+
+== Semantics
+
+Our constraints are interpreted under the Herbrand universe of types, referred to as _ground types_ ($gt$). 
 $
-  tau ::= alpha | overline(tau) tformer | tau approx tau
+  gt ::= overline(gt) tformer
 $
+A ground (or semantic) assignment $phi$ is a partial function from type variables $alpha$ to ground types $gt$ (or scoped ground types $gt^kappa$). 
 
-Let $cal(S)$ be a _signature_ for type formers, defining an arity function $arity_cal(S)$ mapping type formers $tformer$ to their arity $n in NN$. A type $tau$ is well-formed in the context of the signature $cal(S)$, written $cal(S) tack tau$, if each occurance of the type former $overline(tau') tformer$ has the correct arity $|overline(tau')| = arity_cal(S)(tformer)$.  
-
-Our algebra is associated with a equational theory $E(equiv)$ defined by the following set of axioms:
-
+Implication constraints introduce equalities. These are taken into account using a _consistency bit_ $kappa$. If we are in a consistent context, then it follows that only reflexive equalities $gt = gt$ have been introduced. Otherwise we are in an inconsistent context. Consistency affects the types we can introduce in existential binders $exists alpha. C$ -- namely if we are in a consistent context, then it follows that $alpha$ must only be used to prove reflexive equations (in equality constraints). 
+To encode this semantic constraint, we add consistencies to _ground types_, forming _scoped ground types_ ($gt^kappa$). 
 $
-  tau approx tau &equiv tau \
-  tau_1 approx tau_2 &equiv tau_2 approx tau_1 \
-  tau_1 approx (tau_2 approx tau_3) &equiv (tau_1 approx tau_2) approx tau_3 \
-  (tau_1, ..., tau_2 approx tau_2^', ..., tau_n) tformer &equiv (tau_1, ..., tau_2, ..., tau_n) tformer approx (
-    tau_1, ..., tau_2^', ..., tau_n
-  ) tformer
+  gt^kappa ::= overline(gt^kappa) op(tformer)^kappa
 $
+A scoped ground type is _well-formed_ if any of the subterms in $gt^kappa$ are inconsistent then $gt^kappa$ is inconsistent. 
+We write $consistent(gt^kappa)$ for $kappa$ where $gt^kappa : kappa$. The interpretation of a type $tau$ under a ground assignment $phi$ and consistency $kappa$ is written $phi^kappa (tau)$. 
 
-#comment[It would make sense to quotient over the idempotent-associative-commutative parts (so $approx$ is set-like), but then manipulate distributivity as an explicit relation still.]
-
-#let rnf = textsf("rnf")
-#let amb = textsf("amb")
-
-There would be several notions of normal forms for distributivity. We could _expand_ types by applying the left-to-right direction, repeatedly duplicating the head type-formers until we get sets of non-ambivalent types. Instead we propose to _reduce_ types by applying the right-to-left direction as much as possible. This gives a notion of normal forms where, in a type of the form $tau_1 approx dots approx tau_n$, any given type-former occurs at most once as the head of a $tau_i$.
-
-This notion of "reduced" normal form coincides with the behavior we expect from the constraint solver, where the decomposition rules during unification will enforce this form of maximal sharing.
-
-We give a syntax to these reduced normal forms (RNF) below.
-The function $rnf$ for converting types to RNFs is straightforward, if relatively tedious. We make use of auxiliary functions $amb(N, N)$ which relies on the ability
-to re-order normal forms using commutativity. 
-
-$
-  A &::= alpha | overline(N) tformer #h1 N &::= A | N approx A
-$
-
-Since the grammars of $A$ and $N$ define a subsets of types, an equational theory is also induced on them by $E(equiv)$. 
-
-#judgement-box($rnf(tau) : N$) 
-$
-  rnf(alpha) &= alpha \ 
-  rnf(overline(tau) tformer) &= overline(rnf(tau)) tformer \ 
-  rnf(tau_1 approx tau_2) &= amb(rnf(tau_1), rnf(tau_2))
-$
-#judgement-box($amb(N, N) : N$) 
-$
-  amb(N, alpha) &= cases(
-    N &"if" alpha in N, 
-    N approx alpha #h1&"otherwise"
-  ) \ 
-
-  amb(N_1, overline(N_2) tformer) &= cases(
-    N'_1 approx overline(amb(N'_2, N_2)) tformer #h1&"if" N_1 equiv N'_1 approx overline(N'_2) tformer or N_1 = overline(N'_2) tformer,
-    N_1 approx overline(N_2) tformer &"otherwise"
-  )
-$
-
-#comment[TODO: Explain why RNF is useful -- what problem does it solve]
-
-
-
-*Semantics*. We now formally define the semantic interpretation of types. Informally, the model consists of ground normal forms. A ground (or semantic) type $gt$ is defined by the grammar:
-#let ga = math.upright(math.bold("a"))
-$
-  ga ::= overline(gt) tformer #h1 gt ::= ga | gt approx ga 
-$
-
-We have the additional constraint that for all ground types, $rnf(gt) = gt$. That is to say the type is fully normalized. 
-The interpretation of a type $tau$, under the ground assignment $phi$, written $phi(tau)$ is defined by:
-$
-  phi(alpha) &= phi(alpha) \ 
-  phi(overline(tau) tformer) &= overline(phi(tau_i)) tformer \
-  phi(tau_1 approx tau_2) &= amb(phi(tau_1), phi(tau_2))
-$
-
-Having defined the interpretation of types, we may now define what it means for a type $tau_3$ to _contain_ a type $tau_1$. 
-We do so by lifting the definition of containment on semantic types $gt_1 subset.eq gt_3$:
+#judgement-box($gt^kappa : kappa$)
 $
   #proof-tree(
     rule(
-      $gt subset.eq gt$,
+      $overline(gt^kappa) op(tformer)^kappa : kappa$,
+      $forall i. space gt_i^kappa : ctrue$, 
     )
   )
 
@@ -359,25 +378,26 @@ $
 
   #proof-tree(
     rule(
-      $gt_1 subset.eq gt_3$, 
-      $(gt_1 approx gt_2) equiv gt_3$
+      $overline(gt^kappa) op(tformer)^cfalse : cfalse$, 
+      $gt_i^kappa : cfalse$
     )
   )
-$ 
-Note that this is equivalent to $amb(gt_1, gt_2) = gt_2$. 
-A ground type $gt$ is consistent, written $consistent(gt)$, iff it doesn't contain $approx$. The name comes from the fact that if a ground type is in reduced normal form and still contains type subpexression of the form $gt_1 approx gt_2$, then $gt_1$ and $gt_2$ are necessarily incompatible ground types.
+$
 
-
-== Semantics
-
-Our constraints are interpreted under the model of ground types. A ground (or semantic) assignment $phi$ is a partial function from type variables $alpha$ to ground types $gt$. 
-
-Implication constraints introduce equalities. These are taken into account using a _consistency bit_ $kappa$. If we are in a consistent context, then it follows that only reflexive equalities $gt = gt$ have been introduced. Otherwise we are in an inconsistent context. Consistency affects the types we can introduce in existential binders $exists alpha. C$ -- namely if we are in a consistent context, then it follows that the type assigned to $alpha$ must be consistent. 
+#let scoped = textsf("scoped")
+$
+  phi^kappa (tau) &: gt^kappa \
+  phi^kappa (alpha) &= cases(
+    gt^kappa &"if" phi(alpha) = gt^kappa, 
+    scoped(kappa, gt) &"if" phi(alpha) = gt
+  ) \ 
+  phi^kappa (overline(tau) tformer) &= overline(phi^kappa (tau_i)) tformer^(kappa') #h1 &"where" kappa => kappa'
+$
+We write $scoped(kappa, gt)$ for a $gt^kappa : kappa'$ such that $gt^kappa$ has the same structure as $gt$ and $kappa => kappa'$. This usage of 'unscoped' types corresponds to the usage of rigid variables as Skolem constants -- where such constants have no scope associated with them. 
 
 An _environment_ $rho$ is a partial function from expression variables $x$ to _ground type schemes_ $gs$ -- a set of consistency and ground type pairs $kappa tack gt$, known as a _ground instance_, which reflects that the scheme was instantiated to $gt$ under the consistency $kappa$. 
 
-
-The satisfiability judgement for constraints $kappa; phi; rho tack C$ states that _in the environment $rho$ with consistency $kappa$, the assignment $phi$ satisfies the constraint $C$_. 
+The satisfiability judgement for constraints $kappa, phi, rho tack C$ states that _in the environment $rho$ with consistency $kappa$, the assignment $phi$ satisfies the constraint $C$_. 
 
 
 #judgement-box($kappa, phi, rho tack.r C $)
@@ -409,8 +429,8 @@ $
   #proof-tree(
     rule(
       $kappa, phi, rho tack.r exists alpha. C$, 
-      $kappa => consistent(gt)$, 
-      $kappa, phi[alpha |-> gt], rho tack.r C$,
+      $kappa => consistent(gt^kappa)$, 
+      $kappa, phi[alpha : fflex |-> gt^kappa], rho tack.r C$,
       name: [(Exists)]
     )
   )
@@ -421,7 +441,7 @@ $
     rule(
       $kappa, phi, rho tack.r forall alpha. C$, 
       $forall gt$, 
-      $kappa and consistent(gt), phi[alpha |-> gt], rho tack.r C$, 
+      $kappa, phi[alpha : frigid |-> gt], rho tack.r C$, 
       name: [(Forall)]
     )
   )
@@ -430,28 +450,19 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack.r alpha_1 = alpha_2$,
-      $phi(alpha_1) = phi(alpha_2)$, 
+      $kappa, phi, rho tack.r tau_1 = tau_2$,
+      $phi^kappa (tau_1) = phi^kappa (tau_2)$, 
       name: [(Equal)]
     )
   )
 
-  #h1
-
-  #proof-tree(
-    rule(
-      $kappa, phi, rho tack.r psi subset.eq alpha$,
-      $phi(psi) subset.eq phi(alpha)$, 
-      name: [(Sub)]
-    )
-  )
 
   #v2
 
   #proof-tree(
     rule(
       $kappa, phi, rho tack.r A ==> C$, 
-      $kappa and phi(A), phi, rho tack.r C$, 
+      $kappa and phi_(| frigid) (A), phi, rho tack.r C$, 
       name: [(Impl)]
     )
   )
@@ -470,8 +481,8 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack x <= alpha$, 
-      $kappa tack phi(alpha) in rho(x)$, 
+      $kappa, phi, rho tack x <= tau$, 
+      $kappa tack phi^kappa (tau) in rho(x)$, 
       name: [(VarInst)]
     )
   )
@@ -481,8 +492,8 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack sigma <= alpha$, 
-      $kappa tack phi(alpha) in (phi, rho) sigma$, 
+      $kappa, phi, rho tack sigma <= tau$, 
+      $kappa tack phi^kappa (tau) in (phi, rho) sigma$, 
       name: [(SchemeInst)]
     )
   )
@@ -502,20 +513,62 @@ $
 
   #proof-tree(
     rule(
-      $kappa, phi, rho tack exists (forall overline(alpha), overline(beta). C => gamma)$, 
+      $kappa, phi, rho tack exists (forall overline(alpha), overline(beta). C => tau)$, 
       $kappa, phi, rho tack forall overline(alpha). exists overline(beta). C$, 
       name: [(SchemeSat)]
     )
   )
 $
 
-The interpretation of the constrained type scheme $cforall(overline(alpha : f), C, gamma)$ in the assignment $phi$ contains all ground instances $kappa' tack (phi,phi')(gamma)$ which satisfy $C$, where $phi$ is extended with a disjoint assignment $phi'$ for the $overline(alpha)$, that has to pick only consistent ground variables when $kappa'$ is consistent:
+#judgement-box($gt_1 = gt_2$)
+
 $
-  (phi, rho)(cforall(overline(alpha : f), C, gamma)) = { kappa' tack (phi,phi')(gamma) :
-    dom(phi') = overline(alpha)
+  #proof-tree(
+    rule(
+      $overline(gt_1) op(tformer)^kappa = overline(gt_2) op(tformer)^kappa$, 
+      $forall i. space gt_(1i) = gt_(2i)$
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $overline(gt_1) op(tformer)^cfalse = overline(gt_2) op(textsf("G"))^cfalse$,
+      $tformer eq.not textsf("G")$
+    )
+  )
+$
+
+#comment[An odd thing about this definition of equality is that in a false context, a variable can be set to any ground type (provided its marked as false) and satisfy the constraint. This is a benefit of 'structural ambivalence' over 'scoped types']
+
+The interpretation of the constrained type scheme $cforall(overline(alpha : f), C, tau)$ in the assignment $phi$ contains all ground instances $kappa' tack (phi,phi')^(kappa')(tau)$ which satisfy $C$, where $phi$ is extended with a disjoint assignment $phi'$ for the $overline(alpha)$, that has to pick only consistent ground variables when $kappa'$ is consistent:
+$
+  (phi, rho)(cforall(overline(alpha : f), C, tau)) = { kappa' tack (phi,phi')^kappa (tau) :
+    phi' : overline(alpha : f)
     and kappa' => consistent(phi')
     and kappa', (phi, phi'), rho tack C }
 $
+
+#judgement-box($phi : overline(alpha : f)$)
+$
+  #proof-tree(
+    rule(
+      $dot : dot$, 
+      $$
+    )
+  ) 
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $phi[beta : f' |-> gt^kappa] : (overline(alpha : f), beta : f')$, 
+      $phi : overline(alpha : f)$
+    )
+  )
+$
+Notice that $phi : overline(alpha : f)$ only assigns _scoped ground types_ -- this corresponds to the idea that instantiating a rigid variable treats the rigid variable like an existential in terms of propagating scopes. This behaviour matches our solver. 
 
 #comment[Note: It is odd that the interpretation of schemes doesn't include the consistency at which is was defined. The reasoning behind this that consistency can only decrease and that satisfiability is stable under consistent (i.e. a constraint satisfiable under true is satisfiable under false). Since consistency is referenced in the instance, this ensures that under a 'true' context, the scheme must be satisfable under a true assignment. The let constraint ensures that the scheme must have some instances under the current satisfiability using the $exists sigma$ judgement. This allows us to have the standard let = def + satisfiability check equivalence.]
 
@@ -535,7 +588,76 @@ $
 $
 
 
-#pagebreak()
+_Examples of satisfiability_. Let us consider the following constraint 
+$
+  forall alpha. exists beta. alpha = tint ==> beta = alpha and beta = tint
+$
+When considering the satisfiability of this constraint, we are stuck -- we cannot find a _consistent_ type $gt$ which would satisfy $beta = alpha$ and $beta = tint$. 
+$
+  #proof-tree(
+    rule(
+      $ctrue, dot tack forall alpha. exists beta. alpha = tint ==> beta = alpha and beta = tint$, 
+      $forall gt$,
+      rule(
+        $ctrue, [alpha |-> gt] tack exists beta. alpha = tint ==> beta = alpha and beta = tint$,
+        $exists gt'$, 
+        $ctrue => consistent(gt')$,
+        rule(
+          $ctrue, [alpha |-> gt, beta |-> gt'] tack alpha = tint ==> beta = alpha and beta = tint$, 
+          $gt = tint, [alpha |-> gt, beta |-> gt'] tack beta = alpha and beta = tint$
+        ) 
+      )
+    )
+  )
+$
+
+In the case that $gt$ is equal to $tint$, we can find the solution for $beta$ to be $tint^(ctrue)$. However, 
+for all other assignments of $gt$, we would need to consistent $gt'$ to be _inconsistent_ in order to satisfy $gt = gt'$ and $gt' = tint$. But since $gt'$ is 
+introduced in a _consistent_ context, we cannot make $gt'$ inconsistent. Thus the constraint is unsatisfable in our semantics. 
+
+However, the constraint 
+$
+  forall alpha. alpha = tint ==> exists beta. beta = alpha and beta = tint
+$
+is satisfiable in our semantics. 
+
+To demonstrate polymorphism with ambivalence, consider the following constraint 
+$
+  forall alpha. alpha = tint ==> exists beta. clet x : forall gamma : fflex. gamma = alpha and gamma = tint => gamma cin x <= beta
+$
+From the semantics, we obtain:
+$
+  #proof-tree(
+    rule(
+      $ctrue, dot, dot tack forall alpha. alpha = tint ==> exists beta. clet x : forall gamma : fflex. gamma = alpha and gamma = tint => gamma cin x <= beta$, 
+      $forall gt$, 
+      rule(
+        $ctrue, [alpha |-> gt], dot tack alpha = tint ==> exists beta. clet x : forall gamma : fflex. gamma = alpha and gamma = tint => gamma cin x <= beta$, 
+        rule(
+          $gt = tint, [alpha |-> gt], dot tack exists beta. clet x : forall gamma : fflex. gamma = alpha and gamma = tint => gamma cin x <= beta$, 
+          $exists gt'$, 
+          $gt = tint => consistent(gt')$, 
+          rule(
+            $gt = tint, [alpha |-> gt, beta |-> gt'], dot tack clet x : forall gamma : fflex. gamma = alpha and gamma = tint => gamma cin x <= beta$,
+            $gt = tint, phi, dot tack exists (gamma : fflex. gamma = alpha and gamma = tint => gamma)$,
+            rule(
+              $gt = tint, phi, [x |-> gs] tack x <= beta$, 
+              $gt = tint tack gt' in gs$
+            )
+          )
+        )
+      )
+    )
+  )
+$
+
+The scheme is clearly satisfiable -- thus $gs$ is non-empty. In general, it is of the form:
+$
+  gs &= {kappa' tack gt'' : kappa' => consistent(gt'') and kappa', [alpha |-> gt, beta |-> gt', gamma |-> gt''] tack gamma = alpha and gamma = tint} \ 
+  &= { ctrue tack tint^ctrue : gt = tint} union { cfalse tack gt'' : gt eq.not tint and not consistent(gt'')}
+$
+
+This it is clear that the assignment for $beta$ ($gt'$) is $tint^ctrue$ in a consistent context and some inconsistent type in a inconsistent context. 
 
 == Constraint Generation
 
@@ -545,40 +667,156 @@ We introduce a function $[| e : alpha |]$, which translates the expression $e$ a
 $
   
   [| x : alpha |] &= x <= alpha \ 
-  [| efun x -> e : alpha |] &= exists alpha_1 alpha_2. cdef x: alpha_1 cin [| e : alpha_2 |] and alpha supset.eq alpha_1 -> alpha_2 \ 
-  [| e_1 space e_2 : alpha |] &= exists alpha_1, alpha_2. [| e_1 : alpha_1 |] and [| e_2 : alpha_2 |] and alpha_1 supset.eq alpha_2 -> alpha  \ 
+  [| efun x -> e : alpha |] &= exists alpha_1 alpha_2. cdef x: alpha_1 cin [| e : alpha_2 |] and alpha = alpha_1 -> alpha_2 \ 
+  [| e_1 space e_2 : alpha |] &= exists alpha_1, alpha_2. [| e_1 : alpha_1 |] and [| e_2 : alpha_2 |] and alpha_1 = alpha_2 -> alpha  \ 
   [| clet x = e_1 cin e_2 : alpha |] &= clet x : paren.l.double e_1 paren.r.double cin [| e_2 : alpha |] \ 
   [| efun (etype beta) -> e : alpha |] &= clet x : paren.l.double e paren.r.double_beta cin x <= alpha \ 
-  [| (e : tau) : alpha |] &= alpha supset.eq tau and [| e : tau |] \ 
-  [| erefl : alpha |] &= exists alpha_1. alpha supset.eq (alpha_1 = alpha_1) \ 
+  [| (e : tau) : alpha |] &= alpha = tau and [| e : tau |] \ 
+  [| erefl : alpha |] &= exists alpha_1. alpha = (alpha_1 = alpha_1) \ 
   [| ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : alpha |] &= [| e_1 : tau_1 = tau_2 |] and (tau_1 = tau_2) ==> [| e_2 : alpha |]
 $
 
 $
   paren.l.double e paren.r.double &= forall alpha. [| e : alpha |] => alpha \ 
   paren.l.double e paren.r.double_alpha &= forall alpha, beta. [| e : beta |] => beta 
-
 $
 
-_Split Types_. For the translation of types $tau$ into shallow types used in constraints, we require the notion of split types. Split types $sigma.alt$  are a pair $Xi triangle.small.r alpha$, where the (deep) type may be reconstructed from the subset constraints in $Xi$ and variable $alpha$.
-More formally, the grammar of split types $sigma.alt$ is given by:
-$
-  sigma.alt ::= Xi triangle.small.r alpha #h(1cm) Xi ::= exists overline(alpha). Omega #h(1cm) Omega ::= dot | Omega, alpha supset.eq psi
-$
-where $psi$ is an shallow type. Here is formal translations between split and deep types:
-$
-  ceil(alpha) &= exists beta. beta supset.eq alpha triangle.small.r beta \ 
-  ceil(overline(tau) tformer) &= exists alpha. overline(Xi), alpha supset.eq overline(beta) tformer triangle.small.r alpha &#h(2cm) &"where" ceil(tau_i) = Xi_i triangle.small.r beta_i \ 
-$
-We can now extend the constraint language with the subset constraint $alpha supset.eq tau$ using split types, defined by:
-$
-  alpha supset.eq tau eq.delta exists overline(alpha). and.big Omega and alpha' = alpha #h(2cm) "where" ceil(tau) = exists overline(alpha). Omega triangle.small.r alpha'
-$
+
+
+// _Split Types_. For the translation of types $tau$ into shallow types used in constraints, we require the notion of split types. Split types $sigma.alt$  are a pair $Xi triangle.small.r alpha$, where the (deep) type may be reconstructed from the subset constraints in $Xi$ and variable $alpha$.
+// More formally, the grammar of split types $sigma.alt$ is given by:
+// $
+//   sigma.alt ::= Xi triangle.small.r alpha #h(1cm) Xi ::= exists overline(alpha). Omega #h(1cm) Omega ::= dot | Omega, alpha supset.eq psi
+// $
+// where $psi$ is an shallow type. Here is formal translations between split and deep types:
+// $
+//   ceil(alpha) &= exists beta. beta supset.eq alpha triangle.small.r beta \ 
+//   ceil(overline(tau) tformer) &= exists alpha. overline(Xi), alpha supset.eq overline(beta) tformer triangle.small.r alpha &#h(2cm) &"where" ceil(tau_i) = Xi_i triangle.small.r beta_i \ 
+// $
+// We can now extend the constraint language with the subset constraint $alpha supset.eq tau$ using split types, defined by:
+// $
+//   alpha supset.eq tau eq.delta exists overline(alpha). and.big Omega and alpha' = alpha #h(2cm) "where" ceil(tau) = exists overline(alpha). Omega triangle.small.r alpha'
+// $
 We can additional extend the constraint generation function $[| e : alpha |]$ to be defined on $[| e : tau |]$
 $
-  [| e : tau |] &= exists alpha. alpha  tau and [| e : alpha |]
+  [| e : tau |] &= exists alpha. alpha = tau and [| e : alpha |]
 $
 
+_Examples of constraint generation_. 
+We'll consider some interesting edge cases of ambivalent types:
+```ocaml
+type ('a, 'b) eq = Refl constraint 'a = 'b
+
+(* succ - return type *)
+let f1 (type a) (w : (a, int) eq) = 
+  match w with Refl -> 
+  let amb_succ = if true then succ else (succ : a -> a) in  
+  amb_succ 1
+;;
+
+(* succ - argument type *)
+let f2 (type a) (w : (a, int) eq) = 
+  match w with Refl -> 
+  let amb_succ = if true then succ else (succ : a -> a) in  
+  (fun y -> ignore (amb_succ y); y) 1
+
+(* ambivalent instantiation of rigid variables *)
+let coerce = 
+  fun (type a b) w x -> 
+  let w = (w : (a, b) eq) in 
+  let x = (x : a) in 
+  match (w : (a, b) eq) with Refl -> (x : b)
+;; 
+
+let f3 (type a) (w : (a, int) eq) (x : a) = 
+  match w with Refl -> 
+  let y = if true then x else 0 in 
+  coerce Refl y  
+;;
+```
+
+Morally, the constraint of `f1` is 
+$
+  forall alpha. exists beta. alpha = tint ==> exists gamma, delta. gamma = tint -> tint and gamma = alpha -> alpha and gamma = delta -> beta and delta = tint. 
+$
+This constraint is not satisfiable (as expected :) ). Proof sketch:
+$
+  
+  #proof-tree(
+    rule(
+      $ctrue, dot tack forall alpha. exists beta. alpha = tint ==> exists gamma, delta. gamma = tint -> tint and gamma = alpha -> alpha and gamma = delta -> beta and delta = tint$, 
+      $forall gt$, 
+      rule(
+        $ctrue, [alpha |-> gt] tack exists beta. alpha = tint ==> exists gamma, delta. gamma = tint -> tint and gamma = alpha -> alpha and gamma = delta -> beta and delta = tint$,
+        $ctrue => consistent(gt')$, 
+        rule(
+          $ctrue, [alpha |-> gt, beta |-> gt'] tack alpha = tint ==> exists gamma, delta. gamma = tint -> tint and gamma = alpha -> alpha and gamma = delta -> beta and delta = tint$, 
+          rule(
+            $gt = tint, [alpha |-> gt, beta |-> gt'] tack  exists gamma, delta. gamma = tint -> tint and gamma = alpha -> alpha and gamma = delta -> beta and delta = tint$, 
+            $gt = tint => consistent(gt''), consistent(gt''')$, 
+            rule(
+              $gt = tint, [alpha |-> gt, beta |-> gt', gamma |-> gt'', delta |-> gt'''] tack C'$, 
+              $dots.up$
+            )
+          )
+        )
+      )
+    )
+  )
+$
+Continuing the derivation, we have 
+$
+  #proof-tree(
+    rule(
+      $gt = tint, [alpha |-> gt, beta |-> gt', gamma |-> gt'', delta |-> gt'''] tack gamma = tint -> tint and gamma = alpha -> alpha and gamma = delta -> beta and delta = tint$, 
+      $gt'' = tint^(kappa_1) ->^(kappa_2) tint^(kappa_3)$, 
+      $gt'' = scoped(alpha = tint, gt) ->^(kappa_4) scoped(alpha = tint, gt)$, 
+      $gt'' = gt''' ->^(kappa_5) gt'$, 
+      $gt''' = tint^(kappa_6)$, 
+      $gt = tint => kappa_i$
+    )
+  )
+$
+
+When $gt = tint$, all scoped $kappa_i$ must be $ctrue$ and $gt'' = tint -> tint$, $gt' = tint$ and $gt''' = tint$. However, when $gt eq.not tint$, $gt'' = gt_1 ->^cfalse gt_2$ (for some inconsistent $gt_1, gt_2$), $gt' = gt_2$ and $gt''' = gt_1$. However, $gt'$ must be consistent (it was introduced in a consistent scope) and $gt_2$ is inconsistent. Thus the constraint is not satisfiable! 
+
+
+Similarly, the constraint of `f2` is 
+$
+  forall alpha. exists beta. alpha = tint ==> exists gamma, delta, eta . gamma = tint -> tint and gamma = alpha -> alpha and gamma = delta -> eta and beta = delta
+$
+This constraint is not satisfiable (as expected :) )
+
+
+For `f3`, the generated constraint for coerce is 
+$
+  paren.double.l"coerce"paren.double.r_(alpha, beta) &= forall alpha, beta, gamma. \ 
+    & exists gamma_w, gamma_x, gamma_r. gamma_w -> gamma_x -> gamma_r = gamma and cdef w: gamma_w, x: gamma_x cin \ 
+    &clet w: forall gamma_w' : fflex. (alpha = beta) = gamma_w' and w <= (alpha = beta) => gamma_w' cin \ 
+    &clet x: forall gamma_x' : fflex. alpha = gamma_x' and x <= alpha => gamma_x' cin \ 
+    &[| w : alpha = beta|] and alpha = beta ==> exists gamma_r'. beta = gamma_r and beta = gamma_r' and x <= gamma_r' \
+
+    &=> gamma
+$
+
+Doing some solving, we get
+$
+ paren.double.l"coerce"paren.double.r_(alpha, beta) &= forall alpha, beta, gamma_w, gamma_x, gamma_r, gamma. \
+ &#h1 gamma_w -> gamma_x -> gamma_r = gamma \ 
+ &#h1 and (alpha = beta) = gamma_w and alpha = gamma_x and beta = gamma_r  => gamma
+$
+
+This is clearly a satisfiable constraint :) The constraint generated by `f3` is of the form (with some simplification):
+$
+  forall alpha. exists beta. alpha = tint ==> &exists gamma. gamma = alpha and gamma = tint \
+  &and exists alpha', beta', gamma_w, gamma_x, gamma_r. (alpha' = beta') = gamma_w and alpha' = gamma_x and beta' = gamma_r \
+  &and exists delta. gamma_w = (delta = delta) and gamma_x = gamma and gamma_r = beta
+$
+This constraint is unsatifable since we have 
+$
+  alpha' = delta = beta' = gamma = beta and gamma = alpha and gamma = tint
+$
+$beta$ is assigned a type in a consistent context, thus cannot be used in a inconsistent equation. Yet $gamma$ must have an inconsistent assignment (in the case of $alpha eq.not tint$). 
 
 // == Problems 
 
