@@ -8,8 +8,6 @@
 We define the constraint solver as a stack machine. Our machine is defined in terms of a transition relation on states of the form $(S, U, C)$, consisting of a stack $S$, a unification problem $U$, and an in-progress constraint $C$. 
 
 #let sscope = $phi.alt$
-#let smineq = textsf("minEqs")
-#let seq = textsf("Eqs")
 
 _Stacks_. The stack $S$ represents the context in which $U and C$ appears. It contains the bindings for flexible and rigid type variables, term variables, and _assumptions_, that may appear in $U and C$. 
 Our states are closed, meaning $S$ must bind all free variables in $U and C$. 
@@ -65,15 +63,48 @@ an equality between an arbitrary number of types $umultieq$ with an arbitrary nu
 $
   #proof-tree(
     rule(
-      $kappa, phi, rho tack Phi tack umultieq supset.sq.eq eta$, 
+      $kappa, phi, rho tack umulti(Phi, umultilb, umultieq)$, 
       $exists gt$, 
-      $consistent(Phi) ==> consistent(gt)$, 
+      $consistent(gt) ==> and.big phi(Phi)$, 
       $forall tau in umultieq. space phi(tau) = gt$, 
       $forall tau^frigid in eta. space phi^frigid (tau^frigid) subset.eq gt$
     )
   )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $kappa, phi, rho tack sscope : A ==> C$, 
+      $kappa and kappa', phi[sscope |-> kappa'], rho tack C$, 
+      $kappa' = phi(A)$
+    )
+  )
 $
 That is, $phi$ satisfies $umulti(Phi, umultilb, umultieq)$ if all members of $umultieq$ are mapped to a single ground type by $phi$ which contains all types in $umultilb$. 
+Note that the above rule extends assignments $phi$ to interpret the consistency of named assumptions $sscope$. 
+
+$
+  #proof-tree(
+    rule(
+      $Delta tack sscope : A ==> C ok$, 
+      $Delta, sscope tack C ok$, 
+      $Delta_(| frigid) tack A ok$, 
+      $sscope in.not Delta$
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Delta tack umulti(Phi, umultilb, umultieq) ok$,
+      $Phi subset.eq Delta$, 
+      $forall tau^frigid in umultilb. space Delta tack tau^frigid rigid$, 
+      $forall tau in umultieq. space Delta tack tau ok$
+    )
+  )
+$
 
 
 // Solver contexts and well-formedness
@@ -84,29 +115,136 @@ That is, $phi$ satisfies $umulti(Phi, umultilb, umultieq)$ if all members of $um
 #let styv = textsf("tyv")
 #let sc = textsf("c")
 
-We write $stmv(S)$ and $styv(S)$ for the term and type variables (flexible or rigid) bound in $S$. Similarly, we write $srv(S)$, 
-$sfv(S)$, and $sass(S)$ for the rigid variables, flexible variables and _named assumptions_ in the stack $S$, respectively. We write $srv(S), sfv(S), sass(S)$ for the context synthesized from $S$ ($sc(S)$). 
+We write $srv(S)$, $sfv(S)$, and $sass(S)$ for the rigid variables, flexible variables and _named assumptions_ in the stack $S$, respectively. 
+We write $stmv(S)$ and $styv(S)$ for the term and type variables (flexible or rigid) bound in $S$, the latter is defined as $srv(S), sfv(S)$. 
+We write $(stmv(S), styv(S), sass(S))$ for the context synthesized from $S$, denoted $sc(S)$. 
 
 $
-  #comment[TODO -- tedious definition]
-$
+  srv(S) &= cases(
+    dot &"if" S = dot, 
+    srv(S')\, a &"if" S = S' :: forall a. square,
+    srv(S')\, overline(a) &"if" S = S' :: clet x : forall overline(alpha)\, overline(a). square => tau cin C, 
+    srv(S') #h1&"otherwise" (S = S' :: \_)
+  )
+  
+  #v2
 
-In order for the state $(S, U, C)$ to be well-formed ($tack (S, U, C) ok$), we require that $S$ is well-formed, $U$ is well-formed in $sc(S)$ and $C$ is well-formed in $srv(S), sfv(S)$. 
+  sfv(S) &= cases(
+    dot &"if" S = dot, 
+    sfv(S')\, alpha &"if" S = S' :: exists alpha. square,
+    sfv(S')\, overline(alpha) &"if" S = S' :: clet x : forall overline(alpha)\, overline(a). square => tau cin C, 
+    sfv(S') #h1&"otherwise" (S = S' :: \_)
+  ) 
+
+  #v2 
+
+  sass(S) &= cases(
+    dot &"if" S = dot, 
+    sass(S')\, sscope: A #h(.5cm) &"if" S = S' :: sscope : A ==> square, 
+    sass(S') &"otherwise" (S = S' :: \_)
+  )
+
+  #v2
+
+  stmv(S) &= cases(
+    dot &"if" S = dot, 
+    stmv(S')\, x #h1&"if" S = S' :: cdef x : sigma cin square, 
+    &"or" S = S' :: clet x : hat(sigma) cin square, 
+    stmv(S') &"otherwise" (S = S' :: \_)
+  )
+
+$
 
 #judgement-box($tack S ok$)
 $
-  #comment[TODO -- also a bit tedious] 
+  #proof-tree(
+    rule(
+      $tack dot ok$, 
+      $$
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $tack S :: exists alpha. square ok$, 
+      $tack S ok$,
+      $alpha in.not styv(S)$, 
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $tack S :: forall a. square ok$, 
+      $tack S ok$, 
+      $a in.not styv(S)$
+    )
+  )
+
+  #v2 
+
+  #proof-tree(
+    rule(
+      $tack S :: cdef x : sigma cin square ok$, 
+      $tack S ok$, 
+      $x in.not stmv(S)$, 
+      $sc(S) tack sigma ok$
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $tack S :: clet x : cforall(#($overline(alpha), overline(a)$), square, tau) cin C ok$, 
+      $tack S ok$, 
+      $x in.not stmv(S)$,
+      $sc(S), x tack C ok$
+    )
+  )
+
+  #v2 
+
+  #proof-tree(
+    rule(
+      $tack S :: clet x : hat(sigma) cin square ok$, 
+      $tack S ok$, 
+      $x in.not stmv(S)$, 
+      $sc(S) tack hat(sigma) ok$
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $tack S :: sscope : A ==> square ok$, 
+      $tack S ok$, 
+      $sscope in.not sass(S)$, 
+      $srv(S) tack A ok$, 
+    )
+  )
 $
 
-To check the well-formedness of constraints ambedded in stack frames, ...
+To check the well-formedness of constraints embedded in stack frames, the rules $tack S ok$ use the contexts induced by $S$. 
+These judgements only ensure the term variables, type variables and named assumptions used in constraints are bound in $S$. 
+In order for the state $(S, U, C)$ to be well-formed ($tack (S, U, C) ok$), we require that $S$ is well-formed ($tack S ok$), $U$ and $C$ are well-formed in $sc(S)$. 
+
+// Ordering on assumptions
+
+#let sminass = textsf("min-assm")
+
 
 == Solver Rules 
 
 We now introduce the rules of the constraint solver itself. 
-The solver consists of a (non-deterministic) state rewriting system, given in Figure ??. We assume re-writings are performed modulo $alpha$-renaming and . 
+The solver consists of a (non-deterministic) state rewriting system, given in Figure ??. We assume re-writings are performed modulo 
+$alpha$-renaming and commutativity of conjunctions and multi-relational structures. 
 
-
-A constraint is satisfiable in a given context if the solver reaches a state of the form ($cal(X), hat(U), ctrue$) where $cal(X)$ is an existential stack context and $hat(U)$ is a _satisfiable solved form_ of a unification problem from an initial configuration build from $C$ $(square, ctrue, C)$. From such a final state, we can read off a most general solution for the constraint by interpreting $hat(U)$ as a substitution. If the constraint is unsatisfiable, the solver ... . 
+A constraint is satisfiable in a given context if the solver reaches a state of the form ($cal(X), hat(U), ctrue$) where $cal(X)$ is an existential stack context and $hat(U)$ is a _satisfiable solved form_ of a unification problem from an initial configuration build from $C$ $(square, ctrue, C)$. From such a final state, we can read off a most general solution for the constraint by interpreting $hat(U)$ as a substitution. If the constraint is unsatisfiable, the solver reaches a state of the form $(S, cfalse, C)$. 
 
 
 #let occurs = $textsf("occurs in")$
@@ -114,12 +252,12 @@ A constraint is satisfiable in a given context if the solver reaches a state of 
 _Unification_. 
 The relation $U -->_S U'$ describes the unification algorithm in the _context_ $S$. We often omit $S$ when it is unncessary. 
 We say $alpha occurs beta$ with respect to $U$ if $U$
-contains a multi-equation of the form $tau subset.sq.eq alpha ...$ 
-where $tau$ is a non-variable type satisfying $beta in fv(tau)$. 
+contains a multi-relation of the form $tau diamond.small alpha diamond.small' ...$ 
+where $tau$ is a non-variable type satisfying $beta in fv(tau)$ and $diamond.small$ denotes some relation (either $=$ or $subset.eq$). 
 A unification problem $U$ is cyclic if there exists $alpha$ such that $alpha occurs alpha$ wrt. $U$. 
 
 A _solved form_ $hat(U)$ is either $cfalse$ or $exists overline(alpha). and.big_i epsilon.alt_i$ where 
-every multi-equation contains at most one non-variable type (either in a equality or lower-bound position), no two multi-equations share a variable, $hat(U)$ is not cyclic, and $overline(alpha) \# overline(beta)$.  Similarly, a _solved scheme_ $hat(sigma)$ is a constrainted type scheme of the form $cforall(overline(alpha : f), hat(U), beta)$. 
+every multi-equation contains at most one non-variable type (either in a equality or lower-bound position), no two multi-equations share a variable, $hat(U)$ is not cyclic.  Similarly, a _solved scheme_ $hat(sigma)$ is a constrainted type scheme of the form $cforall(#($overline(alpha), overline(a)$), hat(U), beta)$. 
 
 
 #let tformerga = $space textsf("G")^a$
@@ -156,12 +294,48 @@ $
   Phi tack umultieq supset.sq.eq psi_1[overline(alpha_1) tformera] union.sq psi_2[overline(alpha_2) tformerga] union.sq eta &-->_S Phi union Phi' tack umultieq supset.sq.eq (psi_1 approx psi_2) union.sq eta and and.big alpha_(1i) supset.sq.eq tau_(1i) \ 
   &#h1 and and.big_j alpha_(2i) supset.sq.eq tau_(2i)  \
 
-  &#h1 "if" tformera eq.not tformerga and Phi' in smineq(S, Phi, overline(tau_1) tformera = overline(tau_2) tformerga) \
+  &#h1 "if" tformera eq.not tformerga and Phi' in sminass(S, Phi, overline(tau_1) tformera = overline(tau_2) tformerga) \
 
   // Clash
   overline(sscope) tack umultieq supset.sq.eq psi[rho_1] union.sq psi'[rho_2] union.sq eta &-->_S cfalse 
   \ 
-  &#h1 "if" (and.big seq(S) ==> exists alpha. rho_1 subset.eq alpha and rho_2 subset.eq alpha )equiv cfalse 
+  &#h1 "if" (and.big sass(S) ==> exists alpha. rho_1 subset.eq alpha and rho_2 subset.eq alpha )equiv cfalse 
+$
+
+// Description of the algorithm
+The unification algorithm is largely standard with the exception of the treatment of _mutli-relations_. Multi-relations are adapted from multi-equations [??]
+but are extended to handle ambivalence. Note that the unification algorithm treats rigid variables as Skolem constructors. The algorithm preserves semantic equivalence and terminates. 
+
+#comment[TODO -- add something on scopes]
+
+_Atomic constraints_. 
+
+
+_Quantifiers_. 
+
+
+_Let binders_.  
+
+
+_Implications_. 
+
+
+$
+ (S, U, alpha = beta) &--> (S, U and tack alpha = beta, ctrue) \ 
+
+ (S, U, psi subset.eq alpha) &--> (S, U and tack psi subset.eq alpha, ctrue) \
+
+ (S, U, C_1 and C_2) &--> (S :: square and C_2, U, C_1) \ 
+
+ (S, U, exists alpha. C) &--> (S :: exists alpha. square, U, C) &#h(2cm)&"if" alpha \# U \ 
+
+
+ (S, U, cdef x : sigma cin C) &--> (S :: cdef x : sigma cin square, U, C) \ 
+
+ (S, U, x <= tau) &--> (S, U, S(x) <= tau) \ 
+
+ (S, U, clet x : cforall(overline(alpha : f), C_1, tau) cin C_2) &--> (S :: clet x : cforall(#($overline(beta), overline(a)$),  square, tau) cin C_2, U, C_1[overline(gamma := a)]) &&"if" overline(alpha : f) = overline(beta : fflex), overline(gamma : frigid)
+  
 $
 
 
@@ -169,14 +343,6 @@ $
 == Metatheory 
 
 
-
-
-
-The constraint solving algorithm is presented as a transition relation $(S, U, C) &--> (S', U', C')$. The rules are split as:
-- Decomposition rules: decomposing $C$ into the stack $S$ or unification problem $U$. 
-- Existential extraction rules: permitting the movement of $exists alpha. square$. 
-- Solving rules: umbrella section for other rules  
-- Pop rules: popping stack frames
 
 // Decomposition rules are:
 // $
