@@ -9,6 +9,7 @@
 #let tstring = textsf("string")
 
 #let tformer = textsf("F")
+#let tformerg = textsf("G")
 #let tforall(alpha) = $forall #alpha. space$
 #let tforallb(alpha, bound) = $forall (#alpha >= #bound). space$
 
@@ -28,7 +29,7 @@
 #let cfalse = textsf("false")
 #let clet = textsf("let")
 #let cis = textsf("is")
-#let cforall(alphas, C, gamma) = $forall #alphas . space #C => #gamma$
+#let cforall(alphas, scopes, C, gamma) = $forall [#scopes] #alphas. space #C => #gamma$
 
 // Judgements
 #let ok = textsf("ok")
