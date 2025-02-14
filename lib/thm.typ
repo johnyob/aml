@@ -23,4 +23,13 @@
 #let example = thmplain("example", "Example").with(numbering: none)
 #let proof = thmproof("proof", "Proof")
 
+#let lemma = thmbox(
+  "lemma",
+  "Lemma",
+  bodyfmt: body => [
+    #set align(left)
+    #body
+  ],
+)
+
 #show: thmrules
