@@ -1,7 +1,7 @@
 #import "lib/template.typ": *
 
 #show: cam-notes.with(
-  title: [ Constraint-Based Type Inference for GADTs ],
+  title: [ Principal and Easy Constraint-Based Type Inference for GADTs ],
 
   subtitle: [ Technical Report ],
 
@@ -13,7 +13,7 @@
     .display("[month repr:long] [day padding:none], [year repr:full]"),
 )
 
-= AML 
+= AML <aml>
 
 #include "chapters/aml.typ"
 #pagebreak()
@@ -27,3 +27,9 @@
 = Solver
 
 #include "chapters/solver.typ"
+#pagebreak()
+
+#show: appendix
+
+= Proofs for @aml-meta[]
+#include "chapters/proofs/aml.typ"

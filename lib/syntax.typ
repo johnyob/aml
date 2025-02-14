@@ -1,56 +1,125 @@
-#let textsf = text.with(font: "roboto")
-#let dom = textsf("dom")
-
-#let is-content = this => {
-  type(this) == str or type(this) == content or type(this) == symbol
+#let collection-rule(
+  // The name of the set being declared 
+  name: none, 
+  // The collection being declared
+  collection, 
+  symbols
+) = {
+  (
+    kind: "collection", 
+    name: name, 
+    collection: collection, 
+    symbols: symbols
+  )
 }
 
 #let syntax-rule(
   // The name of the syntax rule, displayed to the left of the definition
   name: none,
-  // The BNF grammar rule
-  grammar
+  // The collection being defined
+  collection: none,
+  // The meta-variable denoting elements of the collection
+  lhs,
+  delim: $::=$,
+  ..lines,
 ) = {
-  assert(
-    is-content(name),
-    message: "The name of the syntax rule must be some content.",
-  )
-
   (
+    kind: "syntax",
     name: name,
-    grammar: grammar,
+    collection: collection,
+    lhs: lhs,
+    delim: delim,
+    lines: lines.pos(),
   )
-}
-
-#let is-syntax-rule = this => {
-  type(this) == dictionary and "name" in this and is-content(this.name) and "grammar" in this
 }
 
 // Lays out a syntax definition
 #let syntax(
   // The space between each consequtive rule
-  horizontal-spacing: 5cm,
-  // The space between rule names and the rules themselves
-  vertical-spacing: 5mm,
+  name-size: 5cm,
   // The rules the define the syntax
-  ..rules
+  ..rules,
 ) = {
-  let rules = rules.pos()
-  assert(
-    rules.all(is-syntax-rule),
-    message: "Each rule must be a syntax rule defined by #syntax-rule",
-  )
 
-  block(
-    width: 80%,
-    grid(
-      columns: (auto, auto),
+  // We layout syntax using a 5-column table
+  // 
+  // |--------------|------------------|----------------------|----------------|------------|
+  // | Name (left)  | Set Name (right) | Rule symbol (center) | Delim (center) | Rhs (left) |
+  // |--------------|------------------|----------------------|----------------|------------|
+  // 
+  // The delimiter is either a rule production delimiter (usually '::=') or a pad delimiter ('|')
+
+  // Between each rule, we additionally add a gutter-row. 
+  let gutter-row = (none, none, none, none, none)
+
+  // Name, Set Name, Rule symbol are none.  
+  let pad = (none, none, none, $|$)
+    
+  // Adds in.rev to the collection name
+  let layout-collection(collection) = {
+    if collection != none {
+      $#collection in.rev$
+    }
+  }
+
+  let layout-collection-rule(rule) = {
+    (
+      rule.name, 
+      layout-collection(rule.collection), 
+      table.cell(
+        colspan: 3, 
+        align: left,
+        rule.symbols
+      )
+    )
+  }
+
+  let layout-syntax-rule(rule) = {
+    // Add pads
+    let content = rule.lines.intersperse(pad)
+
+    (
+      rule.name, 
+      layout-collection(rule.collection), 
+      rule.lhs, 
+      rule.delim, 
+      content
+    )   
+  }
+
+  let layout-rule(rule) = {
+    if rule.kind == "syntax" {
+      layout-syntax-rule(rule)
+    } else if rule.kind == "collection" {
+      layout-collection-rule(rule)
+    }
+  }
+
+  let layout-rules(rules) = {
+    let content = rules.map(layout-rule).intersperse(gutter-row).flatten()
+  
+    table(
+      columns: (
+        name-size, 
+        auto, 
+        auto, 
+        auto, 
+        auto
+      ), 
       rows: auto,
-      column-gutter: horizontal-spacing,
-      row-gutter: vertical-spacing,
-      align: (left, left),
-      ..rules.map(rule => (rule.name, rule.grammar)).flatten()
-    ),
-  )
+      align: (
+        left, // name
+        right, // set
+        center, // symbol
+        center, // delim
+        left // rules
+      ), 
+      inset: 0.3em, 
+      row-gutter: 0.1em,  
+      stroke: none, 
+      ..content
+    )
+  }
 
+  layout-rules(rules.pos())
 }
