@@ -8,6 +8,14 @@
     #body
   ],
 )
+#let lemma = thmbox(
+  "lemma", 
+  "Lemma", 
+  bodyfmt: body => [
+    #set align(left)
+    #body
+  ],
+)
 #let corollary = thmplain(
   "corollary",
   "Corollary",
