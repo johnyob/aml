@@ -21,12 +21,18 @@
 #let Ctx = textsf("Ctx")
 #let Exp = textsf("Exp")
 #let Con = textsf("Con")
+#let ConAbs = textsf("ConAbs")
+#let ConCtx = textsf("ConCtx")
 #let EqName = textsf("EqName")
+#let Assn = textsf("Assn")
 #let Kind = textsf("Kind")
 #let Flex = textsf("Flex")
 
 #let ty = textsf("ty")
 #let scope = textsf("sc")
+#let GTy = textsf("GTy")
+#let GInst = textsf("GInst")
+#let GScm = textsf("GScm")
 
 // Types
 #let eqname = $phi.alt$
@@ -60,9 +66,16 @@
 #let cis = textsf("is")
 #let cforall(alphas, C, gamma) = $forall #alphas . space #C => #gamma$
 
+
+
+#let gt = math.upright(math.bold("t"))
+#let gs = math.upright(math.bold("s"))
+#let gi = math.upright(math.bold("inst"))
+
 // Judgements
 #let ok = textsf("ok")
 #let ctx = textsf("ctx")
+#let assn = textsf("assn")
 #let scm = textsf("scm")
 #let rigid = textsf("rigid")
 
@@ -73,3 +86,5 @@
 // Functions
 #let fv = textsf("fv")
 #let arity = textsf("arity")
+#let consistent = textsf("consistent")
+#let dangerous = $textsf("dangerous")$
