@@ -39,6 +39,7 @@
 #let tint = textsf("int")
 #let tstring = textsf("string")
 #let tunit = textsf("unit")
+#let tlist = textsf("list")
 #let tformer = textsf("F")
 #let tformerg = textsf("G")
 #let tforall(alpha) = $forall #alpha. space$
@@ -88,3 +89,4 @@
 #let arity = textsf("arity")
 #let consistent = textsf("consistent")
 #let dangerous = $textsf("dangerous")$
+#let safe = $textsf("safe")$
