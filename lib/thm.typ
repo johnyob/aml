@@ -11,7 +11,6 @@
 #let lemma = thmbox(
   "lemma", 
   "Lemma", 
-  base: "theorem",
   bodyfmt: body => [
     #set align(left)
     #body

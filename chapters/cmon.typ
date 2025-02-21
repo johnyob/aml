@@ -20,6 +20,9 @@
 #let Exp = textsf("Exp")
 #let Con = textsf("Con")
 #let EqName = textsf("EqName")
+#let Kind = textsf("Kind")
+#let ty = textsf("ty")
+#let scope = textsf("sc")
 
 // Types
 #let eqname = $phi.alt$
@@ -55,6 +58,8 @@
 
 // Judgements
 #let ok = textsf("ok")
+#let ctx = textsf("ctx")
+#let scm = textsf("scm")
 #let rigid = textsf("rigid")
 
 // Functions

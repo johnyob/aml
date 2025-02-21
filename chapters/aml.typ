@@ -25,49 +25,49 @@ _Expressions_. The syntax of expressions is as follows:
 _Notation_. We write $overline(e)$ for a (possible empty) set of elements ${e_1, ..., e_n}$ and a (possibly empty) sequence $e_1, ..., e_n$. The interpretation of whether $overline(e)$ is a set or a sequence is often implicit. We write $overline(e_1) disjoint overline(e_2)$ as a shorthand for when $overline(e_1) sect overline(e_2) = emptyset$. We write $overline(e_1), overline(e_2)$ as the union or concatenation (depending on the interpretation) of $overline(e_1)$ and $overline(e_2)$. We often write $e$ for the singleton set (or sequence).
 
 _Types_. The syntax of types is as follows:
+#comment[TODO: Align all syntax]
 #syntax(
   horizontal-spacing: 1.25cm,
-  syntax-rule(name: [Type Variables], $alpha, beta, gamma in varset(Ty)$),
-  syntax-rule(name: [Scope Variables], $scopev, rho.alt in varset(Scope)$),
-  syntax-rule(name: [Equation Names], $eqname in EqName$),
+  syntax-rule(name: [Type Variables], $alpha, beta, gamma, scopev, rho.alt in varset(Ty)$),
+  syntax-rule(name: [Equation Names], $eqname in varset(EqName)$),
   syntax-rule(name: [Type Constructors], $tformer in TyCon ::= dot arrow dot | dot = dot | tunit$),
-  syntax-rule(name: [Types], $tau in Ty ::= alpha | overline(tau) tformer | [Psi] tau$),
-  syntax-rule(name: [Type Schemes], $sigma in Scm ::= tau | tforall(scopev) sigma | tforall(alpha) sigma$),
-  syntax-rule(name: [Scopes], $Psi in Scope ::= dot | scopev | Psi, phi.alt$),
+  syntax-rule(name: [Types], $tau^kappa in Ty ::= alpha^kappa | overline(tau^ty) tformer | [tau^scope] tau | dot^scope | tau^scope, eqname$),
+  syntax-rule(name: [Type Schemes], $sigma in Scm ::= tau | tforall(alpha :: kappa) sigma $),
+  syntax-rule(name: [Kinds], $kappa in Kind ::= ty | scope$),
+  syntax-rule(name: [Flexibility], $f ::= fflex | frigid$),
   syntax-rule(
     name: [Contexts],
-    $Gamma in Ctx ::= &dot | Gamma, alpha :: f | Gamma, scopev | Gamma, eqname : tau = tau | Gamma, x: sigma$,
+    $Gamma in Ctx ::= &dot | Gamma, alpha^f :: kappa | Gamma, eqname : tau = tau | Gamma, x: sigma$,
   ),
-  syntax-rule(name: [Flexibility], $f ::= fflex | frigid$),
 )
+
+// Kinds
+Types $tau^kappa$ are _kinded_, where $kappa$ is the kind of a type $tau$, denoted by the superscript. We have the usual kind for types ($ty$), but also kinds for _scopes_ ($scope$). 
+Often the kind of a type is apparent or not relevant and most of the time we will denote the kind to reduce clutter, writing $tau$ for types and $Psi$ for scopes. For clarity, we use $alpha, beta, gamma$ to denote _type variables_ and $scopev, rho.alt$ for _scope variables_. 
 
 // Types
 Types consist of type variables ($alpha$) and type constructors ($tformer$). Type constructors include functions ($arrow$), base types (such as $tunit$), and the equality withness type ($=$).
-
-// Ambivalent types
 Intuiviely, a _scoped ambivalent type_ is a set of provably equivalent types. Under our equivalece relation, introduced later, $[Psi]tau$ is equivalent to a set of types $[Psi]tau'$
 where $tau$ and $tau'$ are provably equal using the equations in $Psi$. An ambivalent type is only _coherent_ (in the context $Gamma$) if the equations in $Psi$ are in $Gamma$. Otherwise, the scope is said to have escaped the context.
+
+// Scopes
+A scope is defined by a _row_ of equation names. An scope is either empty $dot$, a polymorphic scope variable $scopev$, or an extension of a scope $Psi$ with an equation $eqname$, written as $Psi, eqname$. Unlike many other applications of row polymorphism, we _do_ allow duplicate equation names, meaning that $eqname, eqname$ is _well-formed_ (though not equal to the scope $eqname$). However, our use of rows is primarily to represent sets of equations and ensure _coherence_, so these duplicates do not pose a problem.  
 
 // Schemes
 Polymorphic types are defined by _type schemes_ in a mostly typical #ml fashion, generalzing over zero or more variables. However, we extend the notion of polymorphism to also quantify over _scope variables_ as well, introducing a form of _scope polymorphism_.
 
 // Contexts
-Contexts bind term variables to type schemes, introduce (polymorphic) type and scope variables, and store (named) type equations $eqname: tau = tau'$. Each type variable is associated with a _flexibility_ $f$ which can either be _rigid_ ($frigid$) or _flexible_ ($fflex$), indicating whether the type was introduced by an explicit $efun (etype alpha) -> e$ quantifier or implicitly due to let-polymorphism.
+Contexts bind term variables to type schemes, introduce (polymorphic) type and scope variables, and store (named) type equations $eqname: tau = tau'$. Each type variable is associated with a _flexibility_ $f$ which can either be _rigid_ ($frigid$) or _flexible_ ($fflex$), indicating whether the variable was introduced by an explicit $efun (etype alpha) -> e$ quantifier or implicitly due to let-polymorphism.
 Contexts are ordered and duplicates are disallowed. We write $Gamma, Gamma'$ for the concatenation of two contexts (assuming disjointness holds). We write $dom(Gamma)$ for the _domain_ of the context, which informally represents the set of type and scope variables, term variables and equation names. We often write $overline(e) disjoint Gamma$ as a shorthand for $overline(e) disjoint dom(Gamma)$.
 
-We assume types, type schemes, and scopes are equivalent modulo $alpha$-renaming.
+We assume types, scopes, and type schemes are equivalent modulo $alpha$-renaming.
 
-The definition for the set of free variables on types, scopes, and schemes is mostly standard.
+The definition for the set of free variables on types and schemes is standard.
 
 $
-  fv_Ty (alpha) &= { alpha } &&& fv_Scope (dot) &= emptyset \
-  fv_Ty (overline(tau) tformer) &= union.big_i fv_Ty (tau_i) &&& fv_Scope (scopev) &= { scopev } \
-  fv_Ty ([Psi] tau) &= fv_Scope (Psi) union fv_Ty (tau) &#h(2cm)&& fv_Scope (Psi, eqname) &= fv_Scope (Psi)  \ \
-$
-$
-  fv_Scm (tau) &= fv_Ty (tau) \
-  fv_Scm (tforall(alpha) sigma) &= fv_Scm (sigma) \\ { alpha } \
-  fv_Scm (tforall(scopev) sigma) &= fv_Scm (sigma) \\ { scopev }
+  fv (alpha) &= { alpha } &&& fv (dot) &= emptyset \
+  fv (overline(tau) tformer) &= union.big_i fv (tau_i) &&& fv (Psi, eqname) &= fv (Psi) \
+  fv ([Psi] tau) &= fv (Psi) union fv (tau) &#h(2cm)&&  fv(tforall(alpha :: kappa) sigma) &= fv(sigma) \\ { alpha } \  \
 $
 
 
@@ -75,106 +75,92 @@ $
 _Well formedness_. Well-formedness judgements for types, type schemes, and contexts ensure the soundness of scoped ambivalent types and the coherent use of variables.
 
 
-#judgement-box($Gamma tack Psi ok$, $Gamma tack tau rigid$, $Gamma tack tau ok$, $Gamma tack sigma ok$, $Gamma ok$)
+#judgement-box($f_1 <= f_2$, $Gamma tack tau^kappa :: kappa space  f$, $Gamma tack sigma scm$, $Gamma ctx$)
 
 $
+
   #proof-tree(
     rule(
-      $Gamma tack dot ok$,
+      $f <= f$
+    )
+  )
+
+  #h1 
+  
+
+  #proof-tree(
+    rule(
+      $frigid <= fflex$
+    )
+  )
+
+  #v2 
+
+  #proof-tree(
+    rule(
+      $Gamma tack alpha :: kappa space f'$,
+      $alpha^f :: kappa in Gamma$, 
+      $f <= f'$
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Gamma tack overline(tau) tformer :: ty f$,
+      $forall i. space Gamma tack tau_i :: ty f$
+    )
+  )
+
+  #h1 
+
+
+  #proof-tree(
+    rule(
+      $Gamma tack [Psi] tau :: ty fflex$,
+      $Gamma tack Psi :: scope fflex$,
+      $Gamma tack tau :: ty frigid$
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Gamma tack dot :: scope fflex$,
       $$
     )
   )
 
-  #h1
+  #h1 
+
 
   #proof-tree(
     rule(
-      $Gamma tack scopev ok$,
-      $scopev in dom(Gamma)$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack Psi, eqname ok$,
-      $Gamma tack Psi ok$,
+      $Gamma tack Psi, eqname :: scope fflex$,
+      $Gamma tack Psi :: scope fflex$,
       $eqname in dom(Gamma)$
     )
   )
 
-  #v2
-
-  #proof-tree(
-    rule(
-      $Gamma tack alpha ok$,
-      $alpha in dom(Gamma)$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack overline(tau) tformer ok$,
-      $forall i. space Gamma tack tau_i ok$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack [Psi] tau ok$,
-      $Gamma tack Psi ok$,
-      $Gamma tack tau rigid$
-    )
-  )
 
   #v2
 
   #proof-tree(
     rule(
-      $Gamma tack alpha rigid$,
-      $alpha : frigid in Gamma$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack overline(tau) tformer rigid$,
-      $forall i. space Gamma tack tau_i rigid$
-    )
-  )
-
-  #v2
-
-  #proof-tree(
-    rule(
-      $Gamma tack tforall(alpha) sigma ok$,
-      $Gamma, alpha tack sigma ok$,
+      $Gamma tack tforall(alpha :: kappa) sigma scm$,
+      $Gamma, alpha^fflex :: kappa tack sigma scm$,
       $alpha disjoint Gamma$
     )
   )
 
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack tforall(scopev) sigma ok$,
-      $Gamma, scopev tack sigma ok$,
-      $scopev disjoint Gamma$
-    )
-  )
 
   #v2
 
   #proof-tree(
    rule(
-      $dot ok$,
+      $dot ctx$,
       $$
     )
   )
@@ -183,19 +169,21 @@ $
 
   #proof-tree(
     rule(
-      $Gamma, alpha ok$,
-      $Gamma ok$,
+      $Gamma, alpha^f :: kappa ctx$,
+      $Gamma ctx$,
       $alpha disjoint Gamma$
     )
   )
 
-  #h1
+  #h1 
 
   #proof-tree(
     rule(
-      $Gamma, scopev ok$,
-      $Gamma ok$,
-      $scopev disjoint Gamma$
+      $Gamma, eqname: tau_1 = tau_2 ctx$,
+      $Gamma ctx$,
+      $Gamma tack tau_1 :: ty frigid$,
+      $Gamma tack tau_2 :: ty frigid$,
+      $eqname disjoint Gamma$
     )
   )
 
@@ -203,28 +191,18 @@ $
 
   #proof-tree(
     rule(
-      $Gamma, eqname: tau_1 = tau_2 ok$,
-      $Gamma ok$,
-      $Gamma tack tau_1 rigid$,
-      $Gamma tack tau_2 rigid$,
-      $eqname disjoint Gamma$
-    )
-  )
-
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma, x : sigma ok$,
-      $Gamma ok$,
-      $Gamma tack sigma ok$,
+      $Gamma, x : sigma ctx$,
+      $Gamma ctx$,
+      $Gamma tack sigma scm$,
       $x disjoint Gamma$
     )
   )
 $
 
-It is interesting to note that types $tau$ _under_ a scope $Psi$ must be _rigid_. This restriction, inherited from Remy and Garrigue's [??] work on ambivalent types, simplifies our presentation and is sufficient to encode OCaml's behaviour.
+// Rigid types in well-formedness
+It is interesting to note that types $tau$ _under_ a scope $Psi$ must be _rigid_. This restriction, inherited from Remy and Garrigue's [??] work on ambivalent types, simplifies our presentation and is sufficient to encode OCaml's behaviour. Flexibility of variables in the context may be weakened using the $f <= f'$ relation. We write $Gamma tack tau^kappa :: kappa$ when the flexibility doesn't matter. 
 
+// Equivalence 
 We have an equivalence relation on types, written $Gamma tack tau equiv tau'$, with the following set of axioms:
 #[
   // HACK: to align these in the center while having the "if" condition to the side
@@ -239,6 +217,9 @@ We have an equivalence relation on types, written $Gamma tack tau equiv tau'$, w
   $
 ]
 
+
+
+
 To prove equivalences between rigid types under a scope $Psi$, we can either use equalities introduced previously in $Gamma$ and referenced in $Psi$, and the rules of symmetry, transitivity, congruence, decomposition, and distributivity. Type constructors are injective. We formalize this using the $Gamma; Psi tack tau_1 equiv tau_2$ judgement.
 
 Our equivalence relation on types has an interesting link to _contextual modal types_. Namely we can interpret $[Psi] tau$ as a contextual modal type $square_Psi tau$.
@@ -250,7 +231,7 @@ $
   #proof-tree(
     rule(
       $Gamma; Psi tack tau equiv tau$,
-      $Gamma tack tau ok$
+      $Gamma tack tau :: ty frigid$
     )
   )
 
@@ -304,7 +285,7 @@ $
 
 
 _Typing Judgements_. #aml typing judgements have the form $Gamma tack.r e: sigma$ stating that $e$ has the type (scheme) $sigma$ in the context $Gamma$.
-We assume well-formedness for contexts $Gamma ok$. The typing rules are given below.
+We assume well-formedness for contexts $Gamma ctx$. The typing rules are given below.
 
 
 
@@ -325,7 +306,7 @@ $
     rule(
       $Gamma tack efun x -> e : tau_1 -> tau_2$,
       $Gamma, x : tau_1 tack e : tau_2$,
-      $Gamma tack tau_1 ok$
+      $Gamma tack tau_1 :: ty$
     )
   )
 
@@ -354,8 +335,8 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack e : tforall(alpha) sigma$,
-      $Gamma, alpha :: fflex tack e : sigma$,
+      $Gamma tack e : tforall(alpha :: kappa) sigma$,
+      $Gamma, alpha^fflex :: kappa tack e : sigma$,
       $alpha disjoint Gamma$,
     )
   )
@@ -364,8 +345,8 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack efun (etype alpha) -> e : tforall(alpha) sigma$,
-      $Gamma, alpha :: frigid tack e : sigma$,
+      $Gamma tack efun (etype alpha) -> e : tforall(alpha :: ty) sigma$,
+      $Gamma, alpha^frigid :: ty tack e : sigma$,
       $alpha disjoint Gamma$,
       $alpha in.not dangerous(sigma)$
     )
@@ -377,25 +358,16 @@ $
     rule(
       $Gamma tack (e : tau) : tau_2$,
       $Gamma tack e : tau_1$,
-      $Gamma tack tau_1 >= forall ceil(tau rigid) <= tau_2$,
+      $Gamma tack tau_1 >= forall ceil(tau :: ty frigid) <= tau_2$,
     )
   )
 
-  #h1
-
-  #proof-tree(
-    rule(
-      $Gamma tack e : tforall(scopev) sigma$,
-      $Gamma, scopev tack e : sigma$,
-      $scopev disjoint Gamma$
-    )
-  )
 
   #v2
 
   #proof-tree(
     rule(
-      $Gamma tack erefl : tforall(alpha) alpha = alpha$,
+      $Gamma tack erefl : tforall(alpha :: ty) alpha = alpha$,
       $$
     )
   )
@@ -404,7 +376,7 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack () : tforall(scopev) [scopev]tunit$,
+      $Gamma tack () : tforall(scopev :: scope) [scopev]tunit$,
       $$
     )
   )
@@ -415,10 +387,10 @@ $
     rule(
       $Gamma tack ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : sigma$,
       $Gamma tack e_1 : tau$,
-      $Gamma tack forall ceil(tau_1 = tau_2 rigid) <= tau$,
+      $Gamma tack forall ceil(tau_1 = tau_2 :: ty frigid) <= tau$,
       $eqname disjoint Gamma$,
       $Gamma, eqname : tau_1 = tau_2 tack e_2 : sigma$,
-      $Gamma tack sigma ok$,
+      $Gamma tack sigma scm$,
     )
   )
 
@@ -436,51 +408,31 @@ $
 _Variables_. Variables $(x)$ are typed as usual. If a variable has a polymorphic type, the standard #ml instantiation rule applies. The instantiation relation $Gamma tack sigma <= sigma'$ is defined as follows:
 $
   #proof-tree(
-  rule(
-    $Gamma tack tau <= tau'$,
-    $Gamma tack tau equiv tau'$
+    rule(
+      $Gamma tack tau <= tau'$,
+      $Gamma tack tau equiv tau'$
+    )
   )
-)
 
-#h1
+  #h1
 
-#proof-tree(
-  rule(
-    $Gamma tack tforall(alpha) sigma <= sigma'$,
-    $Gamma tack tau ok$,
-    $Gamma tack sigma[alpha := tau] <= sigma'$
+  #proof-tree(
+    rule(
+      $Gamma tack tforall(alpha :: kappa) sigma <= sigma'$,
+      $Gamma tack tau^kappa :: kappa$,
+      $Gamma tack sigma[alpha := tau^kappa] <= sigma'$
+    )
   )
-)
 
-#h1
+  #h1
 
-#proof-tree(
-  rule(
-    $Gamma tack tforall(scopev) sigma <= sigma'$,
-    $Gamma tack Psi ok$,
-    $Gamma tack sigma[scopev := Psi] <= sigma'$
+  #proof-tree(
+    rule(
+      $Gamma tack sigma <= tforall(alpha :: kappa) sigma'$,
+      $Gamma, alpha^fflex :: kappa tack sigma <= sigma'$,
+      $alpha disjoint Gamma$
+    )
   )
-)
-
-#v2
-
-#proof-tree(
-  rule(
-    $Gamma tack sigma <= tforall(alpha) sigma'$,
-    $Gamma, alpha :: f tack sigma <= sigma'$,
-    $alpha disjoint Gamma$
-  )
-)
-
-#h1
-
-#proof-tree(
-  rule(
-    $Gamma tack sigma <= forall scopev. sigma'$,
-    $Gamma, scopev tack sigma <= sigma'$,
-    $scopev disjoint Gamma$
-  )
-)
 $
 
 This relation is mostly standard, adapted to account for type equivalence and scope polymorphism.
@@ -497,44 +449,44 @@ $
 This rule plays a crucial role in manipulating scopes in our typing judgements.
 
 _Equalities_. A type-level equality may be introduced using reflexivity with the unique constructor $erefl$ of type $forall alpha. alpha = alpha$.
-Pattern matching on equalities using $ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2$ can eliminate the equality witness $e_1$ of type $tau_1 = tau_2$, adding it as an implicit equality to the context $Gamma$ while type checking the body $e_2$; the witness $e_1$ must have the structure of $tau_1 = tau_2$ but may have additional scopes -- we formalize this using a _scope erasure_ function. Since the equation is only available in the scope of $e_2$, it must not be present in the return type $sigma$. We ensure this by allocating a fresh name for the equality $eqname disjoint Gamma$ and ensuring $eqname$ doesn't occur in $sigma$, this is done so by using the well-formedness judgement $Gamma tack sigma ok$.
+Pattern matching on equalities using $ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2$ can eliminate the equality witness $e_1$ of type $tau_1 = tau_2$, adding it as an implicit equality to the context $Gamma$ while type checking the body $e_2$; the witness $e_1$ must have the structure of $tau_1 = tau_2$ but may have additional scopes -- we formalize this using a _scope erasure_ function. Since the equation is only available in the scope of $e_2$, it must not be present in the return type $sigma$. We ensure this by allocating a fresh name for the equality $eqname disjoint Gamma$ and ensuring $eqname$ doesn't occur in $sigma$, this is done so by using the well-formedness judgement $Gamma tack sigma scm$.
 If the return type doesn't satisfy this condition, then we say the _equation ($eqname$) has escaped its scope_.
 
 _Annotations_. Annotations represent an explicit loss of sharing of scopes between types. This loss of sharing of scopes permits us to eliminate ambivalence in our return type, thereby preventing scope escapes. The types $tau_1, tau_2$ need not be identical to $tau$ but must instead be _consistent instances_ of $tau$. We define what is means to be a _consistent instance_ below.
 
 // Rigid instances definition
-We begin by defining a _scope insertion_ function $ceil(tau rigid)$ for rigid types, which produces a context of scope variables $cal(S)$ and a type $tau'$ with scopes inserted at _leaves_ of the type. Scopes at inner nodes can be inferred via the distributivity of scopes.
+We begin by defining a _scope insertion_ function $ceil(tau :: ty frigid)$ for rigid types, which produces a context of scope variables $cal(S)$ and a type $tau'$ with scopes inserted at _leaves_ of the type. Scopes at inner nodes can be inferred via the distributivity of scopes.
 
 #let ceilret(a, b) = $#a triangle.r.small #b$
 $
-  ceil(alpha rigid) &= ceilret(scopev, [scopev]alpha) &&"fresh" scopev \
-  ceil(tformer rigid) &= ceilret(scopev, [scopev]tformer) &&"fresh" scopev \
-  ceil(overline(tau) tformer rigid) &= ceilret(#[$cal(S)_1, ..., cal(S)_n$], overline(tau')) tformer &#h(2cm)&"where" ceil(tau_i rigid) = ceilret(cal(S)_i, tau'_i)
+  ceil(alpha :: ty frigid) &= ceilret(scopev, [scopev]alpha) &&"fresh" scopev \
+  ceil(tformer :: ty frigid) &= ceilret(scopev, [scopev]tformer) &&"fresh" scopev \
+  ceil(overline(tau) tformer :: ty frigid) &= ceilret(#[$cal(S)_1, ..., cal(S)_n$], overline(tau')) tformer &#h(2cm)&"where" ceil(tau_i :: ty frigid) = ceilret(cal(S)_i, tau'_i)
 $
 
-We write $forall ceil(tau rigid)$ for $tforall(cal(S)) tau'$ where $ceil(tau rigid) = ceilret(cal(S), tau')$. This type scheme describes a set of instances that are equivalent to $tau$ after _scope erasure_. We say such instances are _consistent instances_ of $tau$. Formally, they satisfy the following:
+We write $forall ceil(tau :: ty frigid)$ for $tforall(cal(S)) tau'$ where $ceil(tau :: ty frigid) = ceilret(cal(S), tau')$. This type scheme describes a set of instances that are equivalent to $tau$ after _scope erasure_. We say such instances are _consistent instances_ of $tau$. Formally, they satisfy the following:
 $
-  forall tau'. space Gamma tack forall ceil(tau rigid) <= tau' ==> exists tau''. space Gamma tack tau' equiv tau'' and floor(tau'') = tau
+  forall tau'. space Gamma tack forall ceil(tau :: ty frigid) <= tau' ==> exists tau''. space Gamma tack tau' equiv tau'' and floor(tau'' :: ty) = tau
 $
-where _scope erasure_, denoted $floor(tau)$, is defined as:
+where _scope erasure_, denoted $floor(tau :: ty )$, is defined as:
 $
-  floor(alpha) &= alpha \
-  floor(overline(tau) tformer) &= overline(floor(tau)) tformer \
-  floor([Psi]tau) &= floor(tau)
+  floor(alpha :: ty ) &= alpha \
+  floor(overline(tau) tformer :: ty) &= overline(floor(tau) :: ty) tformer \
+  floor([Psi]tau :: ty ) &= tau
 $
 
 We use the following judgement to check whether $sigma$ is a consistent instance of $tau$:
 $
   #proof-tree(
     rule(
-      $Gamma tack forall ceil(tau rigid) <= sigma$,
-      $Gamma tack tau rigid$,
-      $Gamma tack forall ceil(tau rigid) <= sigma$
+      $Gamma tack forall ceil(tau :: ty frigid) <= sigma$,
+      $Gamma tack tau :: ty frigid$,
+      $Gamma tack forall ceil(tau :: ty frigid) <= sigma$
     )
   )
 $
-We note that $Gamma tack forall ceil(tau rigid) ok$ is implied by $Gamma tack tau rigid$, as stated in ??.
-To check that both $tau_1$ and $tau_2$ are consistent instances of $tau$, we use the following shorthand $Gamma tack tau_1 >= forall ceil(tau rigid) <= tau_2$ for $Gamma tack forall ceil(tau rigid) <= tau_1$ _and_ $Gamma tack forall ceil(tau rigid) <= tau_2$.
+We note that $Gamma tack forall ceil(tau :: ty frigid) scm$ is implied by $Gamma tack tau :: ty frigid$, as stated in ??.
+To check that both $tau_1$ and $tau_2$ are consistent instances of $tau$, we use the following shorthand $Gamma tack tau_1 >= forall ceil(tau :: ty frigid) <= tau_2$ for $Gamma tack forall ceil(tau :: ty frigid) <= tau_1$ _and_ $Gamma tack forall ceil(tau :: ty frigid) <= tau_2$.
 
 
 _Functions_. Function applications $e_1 space e_2$ are standard and oblivious to scopes.
@@ -564,10 +516,7 @@ $
   dangerous(alpha) &= emptyset \
   dangerous(overline(tau) tformer) &= union.big_i dangerous(tau_i) \
   dangerous([Psi]tau) &= fv(tau) \
-  // Should dangerous should only be a subset of the free variables of the input?
-  dangerous(tforall(alpha) sigma) &= dangerous(sigma) \\ {alpha} \
-  // No need to use set-minus here since dangerous is a set of _type_ variables
-  dangerous(tforall(scopev) sigma) &= dangerous(sigma)
+  dangerous(tforall(alpha :: kappa) sigma) &= dangerous(sigma) \\ {alpha} \
 $
 
 This is because #aml has unrestricted instaniation (and type schemes), thus permitting a generalizable rigid variable under a non-trivial scope would result in a well-formedness
@@ -598,45 +547,78 @@ $
 
 #comment[TODO: Examples]
 
-#definition[A _type_ substitution $theta$ is a total mapping of type variables to types that is the identity everywhere apart from some finite subset of $varset(Ty)$, denoted $dom(theta) subset.eq varset(Ty)$. We write $rng(theta)$ for $fv(theta(overline(dom(theta))))$.]
+== Metatheory
 
-Type substitutions can operate on scoped ambivalent types, therefore must ensure _coherence_ in some context $Gamma$.
 
-#definition[A _type_ substitution ensures _coherence_ in $Gamma$, written $Gamma tack theta$, if $forall alpha in dom(theta). space Gamma tack theta(alpha) ok$. ]
+We now formalize a _syntax-directed_ variant of #aml, proving soundness and completeness with respect to the #aml typing judgements. This provides invertability lemmas that are cruicial for proving that constraint generation is sound and complete with respect to #aml's typing judgements. 
 
-Subsitutions may be extended to total mappings from types to types. We write $overline(e) disjoint theta$ for $overline(e) disjoint (dom(theta) union rng(theta))$. We write $theta \\ overline(alpha)$ for the restriction of $theta$ to $dom(theta) \\ overline(alpha)$.
+We also prove other useful lemmas such as weakening, exchange, substitution, and well-formedness. 
 
-#aml's typing judgements must also preserve coherence. This is ensured with the following regularity theorem:
-#theorem("Regularity")[
-  - If $Gamma ok$ and $Gamma tack tau_1 equiv tau_2$, then $Gamma tack tau_1 ok$ and $Gamma tack tau_2 ok$
-  - If $Gamma ok$ and $Gamma tack sigma_1 <= sigma_2$, then $Gamma tack sigma_1 ok$ and $Gamma tack sigma_2 ok$
-  - If $Gamma ok$ and $Gamma tack e : sigma$, then $Gamma tack sigma ok$
+#comment[FIXME: All of these lemmas/theorems are used exclusively on the syntax directed system. Its probably better to move the SD theorems up and these down.]
+
+#definition[A context $Theta$ is _soft_ if it only consists of $alpha^kappa :: f$ bindings.]
+
+#theorem("Weakening")[
+  Suppose $Gamma, Theta, Delta ctx$. Then
+  + If $Gamma, Delta tack tau^kappa :: kappa space f$, then $Gamma, Theta, Delta tack tau^kappa :: kappa space f$
+  + If $Gamma, Delta tack tau equiv tau'$, then $Gamma, Theta, Delta tack tau equiv tau'$
+  + If $Gamma, Delta tack sigma <= sigma'$, then $Gamma, Theta, Delta tack sigma <= sigma'$
+  + If $Gamma, Delta tack e : sigma$, then $Gamma, Theta, Delta tack e : sigma$
 ]
 #proof[
-  Trivial rule induction.
+  By induction on the derivation. 
 ]
 
-We can also have substitutions on scope variables.
-#definition[A _scope_ substitution $rho$ is a total mapping of scope variables to scopes that is the identity everywhere apart from some finite subset of $varset(Scope)$, denoted $dom(rho) subset.eq varset(Scope)$. We write $rng(rho)$ for $fv_Scope (overline(dom(rho)))$. A scope substitution $rho$ ensures coherence if $forall scopev in dom(rho). space Gamma tack rho(scopev) ok$. ]
+#theorem("Flexibility Weakening")[
+  Suppose $Gamma ctx$ and $Gamma tack tau^kappa :: kappa space f$, then $Gamma tack tau^kappa :: kappa space f'$ where $f <= f'$.
+]
+#proof[
+  By induction on the derivation. 
+]
 
-We have the same notations and extensions for _scope_ substitutions as we do for _type_ substitutions. We often informally refer to a substitution $theta$ as a type substitution $theta_Ty$ _and_ a scope substitution $theta_Scope$.
+#theorem("Type Exchange")[
+  Suppose $Theta, Delta$ are soft and $Gamma, Theta, Delta ctx$. Then
+  + If $Gamma, Theta, Delta tack tau^kappa :: kappa space f$, then $Gamma, Delta, Theta tack tau^kappa :: kappa space f$. 
+  + If $Gamma, Theta, Delta tack tau equiv tau'$, then $Gamma, Delta, Theta tack tau equiv tau'$
+  + If $Gamma, Theta, Delta tack sigma <= sigma'$, then $Gamma, Delta, Theta tack sigma <= sigma'$
+  + If $Gamma, Theta, Delta tack e : sigma$, then $Gamma, Delta, Theta tack e : sigma$
+]
+#proof[
+  By induction on the derivation. 
+]
 
-Substitutions are extended to mappings from type schemes to type schemes in the typical capture avoiding way.
-We can now extend substitutions to mappings from contexts to contexts, as follows:
-$
-  theta(dot) &= dot \
-  theta(Gamma, x : sigma) &= theta(Gamma), x : theta(sigma) \
-  theta(Gamma, alpha :: f) &= cases(
-  theta(Gamma) &&"if " alpha in dom(theta),
-  theta(Gamma)\, alpha :: f &#h1&"otherwise"
-) \
-  theta(Gamma, scopev) &= cases(
-  theta(Gamma) &#h(1.8cm)&"if" scopev in dom(theta),
-  theta(Gamma)\, scopev &#h1&"otherwise"
-) \
-  theta(Gamma, eqname : tau_1 = tau_2) &= theta(Gamma), eqname : theta(tau_1) = theta(tau_2)
-$
+#theorem("Type Substitution")[
+  Suppose $Gamma tack tau^kappa :: kappa space f$. Then 
+  + If $Gamma, alpha^f :: kappa, Delta tack tau^kappa' :: kappa' space f'$, then $Gamma, Delta[alpha := tau^kappa] tack tau^kappa'[alpha := tau^kappa] :: kappa' space f'$
+  + If $Gamma, alpha^f :: kappa, Delta tack tau_1 equiv tau_2$, then $Gamma, Delta[alpha := tau^kappa] tack tau_1[alpha := tau^kappa] equiv tau_2[alpha := tau^kappa]$
+  + If $Gamma, alpha^f :: kappa, Delta tack sigma <= sigma'$, then $Gamma, Delta[alpha := tau^kappa] tack sigma[alpha := tau^kappa] <= sigma'[alpha := tau^kappa]$
+  + If $Gamma, alpha^f :: kappa, Delta tack e : sigma$, then $Gamma, Delta[alpha := tau^kappa] tack e[alpha := tau^kappa] : sigma[alpha := tau^kappa]$
+]
+#proof[
+  By induction on the derivation of the substitutee. 
+]
 
+
+#theorem("Well-formedness Properties")[
+  Suppose $Gamma ctx$. 
+  + If $Gamma; Psi tack tau_1 equiv tau_2$, then $Gamma tack tau_1 :: ty frigid$ and $Gamma tack tau_2 :: ty frigid$.
+  + If $Gamma tack tau_1 equiv tau_2$, then $Gamma tack tau_1 :: ty f$ and $Gamma tack tau_2 :: ty f$.
+  + If $Gamma tack sigma_1 <= sigma_2$, then $Gamma tack sigma_1 scm$ and $Gamma tack sigma_2 scm$. 
+  + If $Gamma tack e : sigma$, then $Gamma tack sigma scm$. 
+]
+#proof[
+  By induction on the derivation. 
+]
+
+#theorem("Reflexivity and Transitivity of Subsumption")[
+  + $Gamma tack sigma <= sigma$
+  + If $Gamma tack sigma_1 <= sigma_2$ and $Gamma tack sigma_2 <= sigma_3$, then $Gamma tack sigma_1 <= sigma_3$
+]
+#proof[
+  + By structural induction on $sigma$. 
+  + By induction on the sum of the _quantifiers_ of $sigma_1, sigma_2$ and $sigma_3$. 
+  #comment[I should do the proof here to be sure of the approach. ]
+]
 
 _Syntax-directed Typing Judgements._ #aml's typing judgements are not syntax-directed. It is useful to have a syntax-directed presentation to admit inversion rules solely on the structure of $e$.
 This technique is entirely standard [??] and we can show the syntax-directed presentation is sound and complete with respect to the declarative rules.
@@ -660,7 +642,7 @@ $
     rule(
       $Gamma tack efun x -> e : tau_1 -> tau_2$,
       $Gamma, x : tau_1 tack e : tau_2$,
-      $Gamma tack tau_1 ok$
+      $Gamma tack tau_1 :: ty$
     )
   )
 
@@ -691,10 +673,10 @@ $
   #proof-tree(
     rule(
       $Gamma tack efun (etype alpha) -> e : tau'$,
-      $Gamma, alpha :: frigid tack e : tau$,
+      $Gamma, alpha^frigid :: ty tack e : tau$,
       $alpha disjoint Gamma$,
       $alpha in.not dangerous(tau)$,
-      $Gamma tack tforall(alpha) tau <= tau'$
+      $Gamma tack tforall(alpha :: ty) tau <= tau'$
     )
   )
 
@@ -704,7 +686,7 @@ $
     rule(
       $Gamma tack (e : tau) : tau_2$,
       $Gamma tack e : tau_1$,
-      $Gamma tack tau_1 >= forall ceil(tau rigid) <= tau_2$,
+      $Gamma tack tau_1 >= forall ceil(tau :: ty frigid) <= tau_2$,
     )
   )
 
@@ -713,7 +695,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack erefl : tau$,
-      $Gamma tack tforall(alpha) alpha = alpha <=  tau$
+      $Gamma tack tforall(alpha :: ty) alpha = alpha <=  tau$
     )
   )
 
@@ -722,7 +704,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack () : tau$,
-      $Gamma tack tforall(scopev) [scopev]tunit <= tau$
+      $Gamma tack tforall(scopev :: scope) [scopev]tunit <= tau$
     )
   )
 
@@ -732,7 +714,7 @@ $
     rule(
       $Gamma tack ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : tau$,
       $Gamma tack e_1 : tau'$,
-      $Gamma tack forall ceil(tau_1 = tau_2 rigid) <= tau'$,
+      $Gamma tack forall ceil(tau_1 = tau_2 :: ty frigid) <= tau'$,
       $eqname disjoint Gamma$,
       $Gamma, eqname : tau_1 = tau_2 tack e_2 : tau$,
       $Gamma tack tau ok$,
@@ -741,13 +723,45 @@ $
 $
 
 
-We write $cal(V)$ for a sequence of non-rigid generalizable variables in the context.
+We write $cal(V)$ for a sequence of non-rigid generalizable variables $overline(alpha^fflex :: kappa)$ in the context. Rather than inlining subsumption (as is standard), we keep it explicit, 
+since each inlining would produce an explicit $equiv$-equivalence, which does not improve readability. 
 
 #lemma[_Soundness of generalization_][
   If $Gamma, cal(V) tack e : tau$ and $cal(V) disjoint Gamma$ then $Gamma tack e : tforall(cal(V)) tau$.
 ] <soundgen>
 #proof[
   Trivial proof by induction on the cardinality of $cal(V)$.
+]
+
+#comment[TODO: Define eqs]
+
+#lemma[
+  Given $alpha in.not textsf("eqs")(Gamma)$. 
+
+  + If $Gamma tack tau equiv tau'$ and $alpha in.not dangerous(tau')$, then $alpha in.not dangerous(tau)$
+  + If $Gamma tack sigma <= sigma'$ $alpha in.not dangerous(sigma')$, then $alpha in.not dangerous(sigma)$] <dangerous-anti-monotonicity-lemma>
+
+#proof[
+  + Induction on the derivation $Gamma tack tau equiv tau'$. 
+  
+  + 
+    We proceed by induction on the derivation of $Gamma tack sigma <= sigma'$. 
+    - *Case* (Equiv)
+    + Use (1)
+
+    - *Case* ($forall$L)
+    + Let us assume $Gamma tack sigma <= sigma'$. 
+    + By inversion of the ($forall$L) rule, we have $sigma = tforall(beta :: kappa) sigma''$ (a), $Gamma tack tau :: kappa$ (b), and\ 
+      $Gamma tack sigma''[beta := tau] <= sigma'$ (c). 
+    + By induction (2.c), we have $alpha in.not dangerous(sigma''[beta := tau])$
+    + By (3), we conclude $alpha in.not dangerous(sigma'')$ and $alpha in.not dangerous(tau)$. 
+    + By (4), $alpha in.not dangerous(tforall(beta) sigma'')$
+
+    - *Case* ($forall$R)
+    + Let us assume $Gamma tack sigma <= sigma'$.
+    + By inversion of the ($forall$R) rule, we have $sigma' = tforall(beta :: kappa) sigma''$ (a), $beta disjoint Gamma$ (b), and $Gamma, beta^fflex :: kappa tack sigma <= sigma''$ (c)
+    + By definition of $dangerous$, we have $alpha in.not dangerous(sigma'')$
+    + By induction (2.c), we have $alpha in.not dangerous(sigma)$
 ]
 
 #theorem[_Soundness of the syntax-directed #aml typing judgements_][
@@ -847,15 +861,12 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
   3. By induction (2.a), we have $Gamma, cal(V) sdtack e : tau$ (a) and $Gamma tack tforall(cal(V)) tau <= sigma'$ (b).
   4. By transitivity of $<=$ (3.b, 2.b), we have $Gamma tack tforall(cal(V)) tau <= sigma$.
 
-  - *Case* (Gen-$alpha$)
+  - *Case* (Gen)
   1. Let us assume $Gamma tack e : sigma$.
-  2. By inversion of the (Gen-$alpha$) rule, we have $Gamma, alpha :: fflex tack e : sigma'$ (a), $alpha disjoint Gamma$ (b), and \ $sigma = tforall(alpha) sigma'$ (c).
-  3. By induction (2.a), we have $Gamma, alpha :: fflex, cal(V) sdtack e : tau$ (a), $cal(V) disjoint Gamma$ (b), and \ $Gamma, alpha :: fflex tack tforall(cal(V)) tau <= sigma'$ (c).
-  4. Let $cal(V') = alpha :: fflex, cal(V)$. By (2.b, 3.b), $cal(V') disjoint Gamma$. By (3.a), $Gamma, cal(V') sdtack e : tau$.
-  5. By defn. of $<=$ and (3.c), we have $Gamma tack tforall(cal(V')) tau <= tforall(alpha) sigma'$.
-
-  - *Case* (Gen-$scopev$)
-  _Symmetrical to (Gen-$alpha$)._
+  2. By inversion of the (Gen) rule, we have $Gamma, alpha^fflex :: kappa tack e : sigma'$ (a), $alpha disjoint Gamma$ (b), and \ $sigma = tforall(alpha :: kappa) sigma'$ (c).
+  3. By induction (2.a), we have $Gamma, alpha^fflex :: kappa, cal(V) sdtack e : tau$ (a), $cal(V) disjoint Gamma$ (b), and \ $Gamma, alpha^fflex :: kappa tack tforall(cal(V)) tau <= sigma'$ (c).
+  4. Let $cal(V') = alpha^fflex :: kappa, cal(V)$. By (2.b, 3.b), $cal(V') disjoint Gamma$. By (3.a), $Gamma, cal(V') sdtack e : tau$.
+  5. By definition of $<=$ and (3.c), we have $Gamma tack tforall(cal(V')) tau <= tforall(alpha) sigma'$.
 
   - *Case* (Let)
   1. Let us assume $Gamma tack elet x = e_1 ein e_2 : sigma$
@@ -892,10 +903,10 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
 
   - *Cases* (TFun).
   1. Let us assume $Gamma tack efun (etype alpha) -> e : sigma$.
-  2. By inversion of the (TFun) rule, we have $Gamma, alpha :: frigid tack e : sigma'$ (a), $alpha disjoint Gamma$ (b), \ $alpha in.not dangerous(sigma')$ (c), and $sigma = tforall(alpha) sigma'$ (d).
-  3. By induction (2.a), we have $Gamma, alpha :: frigid, cal(V) sdtack e : tau'$ (a), $cal(V) disjoint Gamma, alpha :: frigid$ (b), and \ $Gamma, alpha :: frigid tack tforall(cal(V)) tau' <= sigma'$ (d).
-  4. Wlog $beta disjoint Gamma, cal(V), alpha$. Define $cal(V') = cal(V), beta :: fflex$.
-  5. By weakening and exchange (3.a), we have $Gamma, cal(V)', alpha :: frigid sdtack e : tau'$.
+  2. By inversion of the (TFun) rule, we have $Gamma, alpha^frigid :: ty tack e : sigma'$ (a), $alpha disjoint Gamma$ (b), \ $alpha in.not dangerous(sigma')$ (c), and $sigma = tforall(alpha) sigma'$ (d).
+  3. By induction (2.a), we have $Gamma, alpha^frigid :: ty, cal(V) sdtack e : tau'$ (a), $cal(V) disjoint Gamma, alpha^frigid :: kappa$ (b), and \ $Gamma, alpha :: frigid tack tforall(cal(V)) tau' <= sigma'$ (d).
+  4. Wlog $beta disjoint Gamma, cal(V), alpha$. Define $cal(V') = cal(V), beta^fflex :: ty$.
+  5. By weakening and exchange (3.a), we have $Gamma, cal(V)', alpha^frigid :: ty sdtack e : tau'$.
   6. By (3.b, 4), we have $alpha disjoint Gamma, cal(V)'$.
   7. By @dangerous-anti-monotonicity-lemma (2.c, 3.d), $alpha in.not dangerous(tforall(cal(V)) tau')$. Since $alpha disjoint cal(V)$, it follows that $alpha in.not dangerous(tau')$.
   8. Define $tau = tau'[alpha := beta]$.
@@ -905,9 +916,9 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
       rule(
         $Gamma, cal(V') tack tforall(alpha) tau' <= underbrace(tau'[alpha := beta], tau "by (8)")$,
         rule(
-          $Gamma, cal(V') tack beta ok$,
+          $Gamma, cal(V') tack beta :: ty$,
           rule(
-            $beta in Gamma, cal(V')$,
+            $beta^fflex :: ty  in Gamma, cal(V')$,
             $(4)$
           )
         ),
@@ -924,7 +935,7 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
       rule(
         $Gamma, cal(V') sdtack efun (etype alpha) -> e : tau$,
         rule(
-          $Gamma, cal(V'), alpha :: frigid sdtack e : tau'$,
+          $Gamma, cal(V'), alpha^frigid :: ty sdtack e : tau'$,
           $(5)$
         ),
         rule(
@@ -951,15 +962,15 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
         rule(
           $Gamma, alpha :: frigid tack tforall((beta, cal(V))) tau'[alpha := beta] <= sigma'$,
           rule(
-            $Gamma, alpha :: frigid tack alpha ok$,
+            $Gamma, alpha^frigid :: ty tack alpha :: ty$,
             rule(
-              $alpha in Gamma, alpha :: frigid$
+              $alpha^frigid :: ty in Gamma, alpha^frigid :: ty$
             )
           ),
           rule(
-            $Gamma, alpha :: frigid tack (tforall(cal(V)) tau'[alpha := beta])[beta := alpha] <= sigma'$,
+            $Gamma, alpha^frigid :: ty tack (tforall(cal(V)) tau'[alpha := beta])[beta := alpha] <= sigma'$,
             rule(
-              $Gamma, alpha :: frigid tack tforall(cal(V)) tau' <= sigma'$,
+              $Gamma, alpha^frigid :: ty tack tforall(cal(V)) tau' <= sigma'$,
               $(3)$
             ),
             name: [$"by" (11)$]
@@ -975,16 +986,16 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
 
   - *Case* (Unit).
   1. Let us assume $Gamma tack () : sigma$.
-  2. By inversion of the (Unit) rule, we have $sigma = tforall(scopev) [scopev]tunit$.
-  3. Wlog $scopev' disjoint Gamma$. Define $cal(V) = scopev'$.
+  2. By inversion of the (Unit) rule, we have $sigma = tforall(scopev :: scope) [scopev]tunit$.
+  3. Wlog $scopev' disjoint Gamma$. Define $cal(V) = scopev'^fflex :: scope$.
   4. By (3), we have $cal(V) disjoint Gamma$
   5. We have $Gamma, cal(V) tack scopev' ok$ by:
   $
     #proof-tree(
       rule(
-        $Gamma, cal(V) tack scopev' ok$,
+        $Gamma, cal(V) tack scopev' :: scope$,
         rule(
-          $scopev' in Gamma, cal(V)$,
+          $scopev'^fflex :: scope in Gamma, cal(V)$,
           $(3)$
         )
       )
@@ -995,9 +1006,9 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
   $
     #proof-tree(
       rule(
-        $Gamma, cal(V) tack tforall(scopev) [scopev]tunit <= [scopev']tunit$,
+        $Gamma, cal(V) tack tforall(scopev :: scope) [scopev]tunit <= [scopev']tunit$,
         rule(
-          $Gamma, cal(V) tack scopev' ok$,
+          $Gamma, cal(V) tack scopev' :: scope$,
           $(5)$
         ),
         rule(
@@ -1015,20 +1026,20 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
       rule(
         $Gamma, cal(V) sdtack erefl : [scopev']tunit$,
         rule(
-          $Gamma, cal(V) tack tforall(scopev) [scopev]tunit <= [scopev']tunit$,
+          $Gamma, cal(V) tack tforall(scopev :: scope) [scopev]tunit <= [scopev']tunit$,
           $(6)$
         )
       )
     )
   $
 
-  8. We now show that $Gamma tack tforall(scopev') [scopev']tunit <= tforall(scopev) [scopev]tunit$ by:
+  8. We now show that $Gamma tack tforall(scopev' :: scope) [scopev']tunit <= tforall(scopev :: scopev) [scopev]tunit$ by:
   $
     #proof-tree(
       rule(
-        $Gamma tack tforall(scopev') [scopev']tunit <= tforall(scopev) [scopev]tunit$,
+        $Gamma tack tforall(scopev' :: scope) [scopev']tunit <= tforall(scopev :: scope) [scopev]tunit$,
         rule(
-          $Gamma, scopev tack tforall(scopev') [scopev']tunit <= [scopev]tunit$,
+          $Gamma, scopev^fflex :: scope tack tforall(scopev') [scopev']tunit <= [scopev]tunit$,
           $"(6)" (alpha "equiv")$
         ),
         rule(
@@ -1049,7 +1060,9 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
 Having established that any typing derivable in the syntax-directed #aml type system is derivable in the declarative #aml type system (and vice versa), we henceforth use the
 syntax-directed type system (implicitly).
 
+_Monotonicity._ We now show that #aml enjoys _monotonicity_: strengthening the type of a free expression variable by making it more general preserves well-typedness. We draw attention to this property since Remy and Garrigue's calculus also has this property. 
 
+#definition[
 We can extend the instantiation relation $Gamma tack sigma <= sigma'$ to contexts $Gamma <= Gamma'$ as follows
 $
   #proof-tree(
@@ -1078,8 +1091,8 @@ $
     )
   )
 $
+]
 
-#lemma[If $Gamma, alpha :: frigid tack sigma <= sigma'$ and $alpha in.not dangerous(sigma')$, then $alpha in.not dangerous(sigma)$] <dangerous-anti-monotonicity-lemma>
 
 #lemma[If $Gamma' <= Gamma$ then:
   - If $Gamma tack tau rigid$, then $Gamma' tack tau rigid$.
@@ -1123,260 +1136,3 @@ $
   - *Cases* $efun x -> e$, $e_1 space e_2$, $elet x = e_1 ein e_2$, $efun (etype alpha) -> e$, $(e : tau')$, and \ $ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2$.
   _Trivial inductive cases._
 ]
-
-#lemma[
-  Let $theta$ be a coherence preserving substitution under $Gamma$.
-  + If $Gamma tack sigma <= sigma'$, then $theta(Gamma) tack theta(sigma) <= theta(sigma')$.
-  + If $Gamma tack tau ok$, then $theta(Gamma) tack theta(tau) ok$.
-  + If $Gamma tack tau rigid$ and $fv(tau) disjoint theta$, then $theta(Gamma) tack theta(tau) rigid$.
-  + If $Gamma tack Psi ok$, then $theta(Gamma) tack theta(Psi) ok$.
-  + If $alpha in.not dangerous(tau)$ and $alpha disjoint theta$, then $alpha in.not dangerous(theta(tau))$.
-] <subst-stable-lemma>
-
-#theorem[_#aml typing judgements are stable under substitutions_][
-  Let $theta$ be a coherence preserving substitution under $Gamma$ whose domain is disjoint with $fv_Ty (e)$. Then, if $Gamma tack e : tau$, then $theta(Gamma) tack e : theta(tau)$
-] <subst-stable>
-#proof[
-  We proceed by structural induction on $e$.
-  - *Case* $x$.
-  1. Let us assume $Gamma tack x : tau$
-  2. By inversion, we have $x: sigma in Gamma$ (a) and $Gamma tack sigma <= tau$ (b).
-  3. By (2.a), $x : theta(sigma) in theta(Gamma)$.
-  4. By @subst-stable-lemma (2.b), $theta(Gamma) tack theta(sigma) <= theta(tau)$
-  5. We have $theta(Gamma) tack x : theta(tau)$ by:
-  $
-    #proof-tree(
-  rule(
-    $theta(Gamma) tack x : theta(tau)$,
-    rule(
-      $x : theta(sigma) in theta(Gamma)$,
-      $(3)$
-    ),
-    rule(
-      $theta(Gamma) tack theta(sigma) <= theta(tau)$,
-      $(4)$
-    )
-  )
-)
-  $
-
-  - *Case* $efun x -> e$.
-  1. Let us assume $Gamma tack efun x -> e : tau$.
-  2. By inversion, we have $Gamma, x : tau_1 tack e : tau_2$ (a), $Gamma tack tau_1 ok$ (b), and $tau = tau_1 -> tau_2$ (c).
-  3. By induction (2.a), we have $theta(Gamma, x : tau_1) tack e : theta(tau_2)$. By definition, \ $theta(Gamma, x : tau_1) = theta(Gamma), x : theta(tau_1)$. So we have $theta(Gamma), x : theta(tau_1) tack e : tau(theta_2)$.
-  4. By definition of substitution (2.c), $theta(tau) = theta(tau_1) -> theta(tau_2)$.
-  5. By @subst-stable-lemma (2.b), $theta(Gamma) tack theta(tau_1) ok$.
-  6. We have $theta(Gamma) tack efun x -> e : theta(tau)$ by:
-  $
-    #proof-tree(
-  rule(
-    $theta(Gamma) tack efun x -> e : underbrace(theta(tau_1) -> theta(tau_2), theta(tau) "by (4)")$,
-    rule(
-      $theta(Gamma), x : theta(tau_1) tack e : theta(tau_2)$,
-      $(3)$
-    ),
-    rule(
-      $theta(Gamma) tack theta(tau_1) ok$,
-      $(5)$
-    )
-  )
-)
-  $
-
-  - *Case* $e_1 space e_2$.
-  1. Let us assume $Gamma tack e_1 space e_2 : tau$.
-  2. By inversion, we have $Gamma tack e_1 : tau' -> tau$ (a) and $Gamma tack e_2 : tau'$ (b).
-  3. By induction (2.a), we have $theta(Gamma) tack e_1 : theta(tau' -> tau)$. By definition, \ $theta(tau' -> tau) = theta(tau') -> theta(tau)$. So we have $theta(Gamma) tack e_1 : theta(tau') -> theta(tau)$.
-  4. By induction (2.b), we have $theta(Gamma) tack e_2 : theta(tau')$
-  5. We have $theta(Gamma) tack e_1 space e_2 : theta(tau)$ by:
-  $
-    #proof-tree(
-    rule(
-      $theta(Gamma) tack e_1 space e_2 : theta(tau)$,
-      rule(
-        $theta(Gamma) tack e_1 : theta(tau') -> theta(tau)$,
-        $(3)$
-      ),
-      rule(
-        $theta(Gamma) tack e_2 : theta(tau')$,
-        $(4)$
-      )
-    )
-  )
-  $
-
-
-  - *Case* $elet x = e_1 ein e_2$.
-  1. Let us assume $Gamma tack elet x = e_1 ein e_2 : tau$.
-  2. By inversion, we have $Gamma, cal(V) tack e_1 : tau'$ (a), $cal(V) disjoint Gamma$ (b), and $Gamma, x : tforall(cal(V)) tau' tack e_2 : tau$ (c).
-  3. Wlog $cal(V) disjoint theta$.
-  4. By induction (2.a), we have $theta(Gamma, cal(V)) tack e_1 : theta(tau')$. By (3) and definition of substitution on contexts, $theta(Gamma, cal(V)) = theta(Gamma), cal(V)$. So we have $theta(Gamma), cal(V) tack e_1 : theta(tau')$.
-  5. By induction (2.c), we have $theta(Gamma, x : tforall(cal(V)) tau') tack e_2 : theta(tau)$. By definition of substition and (3), $theta(Gamma, x : tforall(cal(V)) tau') = theta(Gamma), x : tforall(cal(V)) theta(tau')$. So we have $theta(Gamma), x : tforall(cal(V)) theta(tau') tack e_2 : theta(tau)$.
-  6. By (3) and (2.b), $cal(V) disjoint theta(Gamma)$.
-  7. We have $theta(Gamma) tack elet x = e_1 ein e_2 : theta(tau)$ by:
-  $
-    #proof-tree(
-    rule(
-      $theta(Gamma) tack elet x = e_1 ein e_2 : theta(tau)$,
-      rule(
-        $theta(Gamma), cal(V) tack e_1 : theta(tau')$,
-        $(4)$
-      ),
-      rule(
-        $cal(V) disjoint theta(Gamma)$,
-        $(6)$
-      ),
-      rule(
-        $theta(Gamma), x : tforall(cal(V)) theta(tau) tack e_2 : theta(tau)$,
-        $(5)$
-      )
-    )
-  )
-  $
-
-  - *Case* $efun (etype alpha) -> e$.
-
-  1. Let us assume $Gamma tack efun (etype alpha) -> e : tau$
-  2. By inversion, we have $Gamma, alpha :: frigid tack e : tau'$ (a), $alpha \# Gamma$ (b), $alpha in.not dangerous(tau')$ (c), and \ $Gamma tack tforall(alpha) tau' <= tau$ (d).
-  3. Wlog $alpha disjoint theta$.
-  4. By induction (2.a), $theta(Gamma, alpha :: frigid) tack e : theta(tau')$. By definition of substitution and (3), we have $theta(Gamma, alpha :: frigid) = theta(Gamma), alpha :: frigid$. So we have $theta(Gamma), alpha :: frigid tack e : theta(tau')$.
-  5. By (2.b) and (3), we have $alpha disjoint theta(Gamma)$.
-  6. By @subst-stable-lemma (2.c, 3), $alpha in.not dangerous(theta(tau'))$.
-  7. By @subst-stable-lemma (2.d) and (3.a), we have $theta(Gamma) tack tforall(alpha) theta(tau') <= theta(tau)$.
-  8. We have $theta(Gamma) tack efun (etype alpha) -> e : theta(tau)$ by:
-  $
-    #proof-tree(
-  rule(
-    $theta(Gamma) tack efun (etype alpha) -> e : theta(tau)$,
-    rule(
-      $theta(Gamma), alpha :: frigid tack e : theta(tau')$,
-      $(4)$
-    ),
-    rule(
-      $alpha disjoint theta(Gamma)$,
-      $(5)$
-    ),
-    rule(
-      $alpha in.not dangerous(theta(tau'))$,
-      $(6)$
-    ),
-    rule(
-      $theta(Gamma) tack tforall(alpha) theta(tau') <= theta(tau) ok$,
-      $(7)$
-    )
-
-  )
-)
-  $
-
-
-
-  - *Case* $(e : tau')$.
-  1. Let us assume $Gamma tack (e : tau') : tau$
-  2. By inversion, we have $Gamma tack e : tau''$ (a) and $Gamma tack tau'' >= forall ceil(tau' rigid) <= tau$ (b)
-  3. By induction (2.a), we have $theta(Gamma) tack e : theta(tau'')$.
-  4. $fv(tau') disjoint theta$
-  5. By @subst-stable-lemma (2.b), $theta(Gamma) tack theta(tau'') >= theta(forall ceil(tau' rigid)) <= theta(tau)$. By (4), we have $theta(forall ceil(tau' rigid)) = forall ceil(tau' rigid)$.
-  6. We have $theta(Gamma) tack (e : tau') : theta(tau)$ by:
-  $
-    #proof-tree(
-    rule(
-      $theta(Gamma) tack (e : tau') : theta(tau)$,
-
-      rule(
-        $theta(Gamma) tack e : theta(tau'')$,
-        $(3)$
-      ),
-      rule(
-        $theta(Gamma) tack theta(tau'') >= forall ceil(tau' rigid) <= theta(tau)$,
-        $(5)$
-      )
-    )
-  )
-  $
-
-  - *Case* $erefl$.
-  1. Let us assume $Gamma tack erefl : tau$.
-  2. By inversion, we have $Gamma tack tforall(alpha) alpha = alpha <= tau$.
-  3. By @subst-stable-lemma (2), $theta(Gamma) tack theta(tforall(alpha) alpha = alpha) <= theta(tau)$.
-  4. Wlog $alpha disjoint theta$.
-  5. By definition of substitution (4), $theta(tforall(alpha) alpha = alpha) = tforall(alpha) alpha = alpha$.
-  6. By (2, 5), we have $theta(Gamma) tack tforall(alpha) alpha = alpha <= theta(tau)$.
-  7. We have $theta(Gamma) tack erefl : theta(tau)$ by:
-  $
-    #proof-tree(
-      rule(
-        $theta(Gamma) tack erefl : theta(tau)$,
-        rule(
-          $theta(Gamma) tack tforall(alpha) alpha = alpha <= theta(tau') ok$,
-          $(6)$
-        )
-      )
-    )
-  $
-
-  - *Case* $()$.
-  1. Let us assume $Gamma tack () : tau$.
-  2. By inversion, we have $Gamma tack tforall(scopev) [scopev]tunit <= tau$.
-  3. By @subst-stable-lemma (2.a), we have $theta(Gamma) tack theta(tforall(scopev) [scopev]tunit) <= theta(tau)$.
-  4. Wlog $scopev disjoint theta$
-  5. By definition of substitution (4), $theta(tforall(scopev) [scopev]tunit) = tforall(scopev) [scopev]tunit$.
-  6. By (3, 6), we have $theta(Gamma) tack tforall(scopev) [scopev]tunit <= theta(tau)$
-  7. We have $theta(Gamma) tack () : theta(tau)$ by:
-  $
-    #proof-tree(
-      rule(
-        $theta(Gamma) tack () : theta(tau)$,
-        rule(
-          $theta(Gamma) tack tforall(scopev) [scopev]tunit <= theta(tau)$,
-          $(6)$
-        )
-      )
-    )
-  $
-
-  - *Case* $ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2$.
-  1. Let us assume $Gamma tack ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : tau$.
-  2. By inversion, we have $Gamma tack e_1 : tau'$ (a), $Gamma tack forall ceil(tau_1 = tau_2 rigid) <= tau'$ (b), $eqname disjoint Gamma$ (c), \ $Gamma, eqname : tau_1 = tau_2 tack e_2 : tau$ (d), and $Gamma tack tau ok$ (e).
-  3. By induction (2.a), we have $theta(Gamma) tack e_1 : theta(tau')$.
-  4. Since $fv(tau_1 = tau_2) disjoint theta$.
-  5. By @subst-stable-lemma (2.b), $theta(Gamma) tack theta(forall ceil(tau_1 = tau_2 rigid)) <= theta(tau')$.
-  6. By definition of substitution (4), $theta(forall ceil(tau_1 = tau_2 rigid)) = forall ceil(tau_1 = tau_2 rigid)$.
-  7. By (5, 6), we have $theta(Gamma) tack forall ceil(tau_1 = tau_2 rigid) <= theta(tau')$.
-  8. By (2.c) and definition of substituion, we have $eqname disjoint theta(Gamma)$.
-  9. By induction (2.d), we have $theta(Gamma, eqname : tau_1 = tau_2) tack e_2 : theta(tau)$. By definition of substitution, we have $theta(Gamma, eqname : tau_1 = tau_2) =theta(Gamma), eqname : theta(tau_1) = theta(tau_2)$. By definition of substitution (4), $theta(tau_1) = tau_1$ and $theta(tau_2) = tau_2$. So we have $theta(Gamma), eqname : tau_1 = tau_2 tack e_2 : theta(tau)$.
-  10. By @subst-stable-lemma (2.e), we have $theta(Gamma) tack theta(tau) ok$.
-  11. We have $theta(Gamma) tack ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : theta(tau)$ by:
-  $
-    #proof-tree(
-    prem-min-spacing: 10pt,
-    rule(
-      $theta(Gamma) tack ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2 : theta(tau)$,
-      rule(
-        $theta(Gamma) tack e_1 : theta(tau')$,
-        $(3)$
-      ),
-      rule(
-        $theta(Gamma) tack forall ceil(tau_1 = tau_2 rigid) <= theta(tau')$,
-        $(7)$
-      ),
-      rule(
-        $eqname disjoint theta(Gamma)$,
-        $(8)$
-      ),
-      rule(
-        $theta(Gamma), eqname: tau_1 = tau_2 tack e_2 : theta(tau)$,
-        $(9)$
-      ),
-      rule(
-        $theta(Gamma) tack theta(tau) ok$,
-        $(10)$
-      )
-    )
-  )
-  $
-]
-
-== Explicit AML
-
-TODO

@@ -1,7 +1,7 @@
 #import "lib/template.typ": *
 
 #show: cam-notes.with(
-  title: [ Constraint-Based Type Inference for GADTs ],
+  title: [ Principal and Easy Constraint-Based Type Inference for GADTs ],
 
   subtitle: [ Technical Report ],
 
