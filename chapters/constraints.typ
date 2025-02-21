@@ -496,7 +496,7 @@ $
   )
 $
 
-To define safety of a single rigid variable, we define what it means to be _ dangerous_ and then take the negation of that property. We begin by extending the definition of $dangerous$ to ground types. 
+To define safety of a single rigid variable. We begin by extending the definition of $dangerous$ to ground types. 
 $
   dangerous(overline(gt) tformer) &= union.big_i dangerous(gt_i) \ 
   dangerous([kappa]gt) &= cases(
@@ -510,26 +510,14 @@ $
   cal(P)([kappa]gt) &= { [kappa]gt } union cal(P)(gt)
 $
 
-A rigid variable $alpha$ is dangerous in $cforall(Theta, C, tau)$ under $kappa, phi, rho$ if for every assignment to $alpha$, the interpretation of $alpha$ occurs in a dangerous position in $tau$ provided $C$ is satisfied. We formally state this below:
+A rigid variable $alpha$ is safe in $cforall(Theta, C, tau)$ under $kappa, phi, rho$ if for a given assignment to $alpha$ (for example the Skolem constant $a$), the interpretation of $alpha$ does not occur in a dangerous position in $tau$ for all possible assignments that satisfy $C$. We formally state this below:
 
 $
   #proof-tree(
     rule(
-      $kappa, phi, rho tack alpha in cforall((Theta, alpha :: frigid), C, tau) dangerous$, 
-      $forall gt. $,
-      $overbrace(kappa and consistent(gt), kappa') tack overbrace(phi'[alpha :: frigid |-> gt], phi'') >= phi : Theta, alpha$, 
-      $kappa', phi'', rho tack C$, 
-      $gt in dangerous(phi''(tau))$, 
-    )
-  )
-$
-
-We now define $kappa, phi, rho tack alpha in sigma safe$ as the negation of the property above:
-$
-  #proof-tree(
-    rule(
-      $kappa, phi, rho tack alpha in sigma safe$, 
-      $not(kappa, phi, rho tack alpha in sigma dangerous)$
+      $kappa, phi, rho tack alpha in cforall((Theta, alpha :: frigid), C, tau) safe$, 
+      $exists gt. forall phi''.$,
+      $phi''(alpha) = gt space and space  kappa tack phi'' >= phi : (Theta, alpha :: frigid) space and space  kappa, phi'', rho tack C ==> gt in.not dangerous(phi''(tau))$, 
     )
   )
 $
@@ -546,7 +534,8 @@ $
   )
 $
 
-#comment[Q: Does this affect the well-foundedness of satisfiability?]
+_Remark_. Notice that the definition of $safe$ refers to satisfiability in the hypothesis of an implication. It is not immediately clear that the satisfiability judgement is well-defined given that it appears in a negative position in the definition of $safe$. #comment[TODO: Show that is it well-founded on the size of $C$] 
+
 
 == Constraint Generation
 
