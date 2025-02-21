@@ -1,5 +1,4 @@
 #let textsf = text.with(font: "roboto")
-#let dom = textsf("dom")
 
 #let is-content = this => {
   type(this) == str or type(this) == content or type(this) == symbol
