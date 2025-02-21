@@ -72,7 +72,7 @@ $
 
 
 
-_Well formedness_. Well-formedness judgements for types, type schemes, and contexts ensure the soundness of scoped ambivalent types and the coherent use of variables.
+_Well-formedness_. Well-formedness judgements for types, type schemes, and contexts ensure the soundness of scoped ambivalent types and the coherent use of variables.
 
 
 #judgement-box($Gamma tack Psi ok$, $Gamma tack tau rigid$, $Gamma tack tau ok$, $Gamma tack sigma ok$, $Gamma ok$)
@@ -308,7 +308,6 @@ We assume well-formedness for contexts $Gamma ok$. The typing rules are given be
 
 
 
-#let dangerous = $textsf("dangerous")$
 
 #judgement-box($Gamma tack e : sigma$)
 $
@@ -597,6 +596,8 @@ $
 $
 
 #comment[TODO: Examples]
+
+== Metatheory
 
 #definition[A _type_ substitution $theta$ is a total mapping of type variables to types that is the identity everywhere apart from some finite subset of $varset(Ty)$, denoted $dom(theta) subset.eq varset(Ty)$. We write $rng(theta)$ for $fv(theta(overline(dom(theta))))$.]
 
