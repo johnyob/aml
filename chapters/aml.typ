@@ -599,45 +599,68 @@ $
 
 == Metatheory
 
-#definition[A _type_ substitution $theta$ is a total mapping of type variables to types that is the identity everywhere apart from some finite subset of $varset(Ty)$, denoted $dom(theta) subset.eq varset(Ty)$. We write $rng(theta)$ for $fv(theta(overline(dom(theta))))$.]
+We now formalize two important properties of our calculus, _monotonicity_ and _stability_. Both are cruicial for proving that constraint generation is sound and complete with respect to #aml's typing judgements. 
 
-Type substitutions can operate on scoped ambivalent types, therefore must ensure _coherence_ in some context $Gamma$.
+#definition[A context $Theta$ is _soft_ if it only consists of $alpha :: f$ and $scopev$.]
 
-#definition[A _type_ substitution ensures _coherence_ in $Gamma$, written $Gamma tack theta$, if $forall alpha in dom(theta). space Gamma tack theta(alpha) ok$. ]
-
-Subsitutions may be extended to total mappings from types to types. We write $overline(e) disjoint theta$ for $overline(e) disjoint (dom(theta) union rng(theta))$. We write $theta \\ overline(alpha)$ for the restriction of $theta$ to $dom(theta) \\ overline(alpha)$.
-
-#aml's typing judgements must also preserve coherence. This is ensured with the following regularity theorem:
-#theorem("Regularity")[
-  - If $Gamma ok$ and $Gamma tack tau_1 equiv tau_2$, then $Gamma tack tau_1 ok$ and $Gamma tack tau_2 ok$
-  - If $Gamma ok$ and $Gamma tack sigma_1 <= sigma_2$, then $Gamma tack sigma_1 ok$ and $Gamma tack sigma_2 ok$
-  - If $Gamma ok$ and $Gamma tack e : sigma$, then $Gamma tack sigma ok$
+#theorem("Weakening")[
+  Suppose $Gamma, Theta, Delta ok$. Then
+  + If $Gamma, Delta tack tau rigid$, then $Gamma, Theta, Delta tack tau rigid$
+  + If $Gamma, Delta tack tau ok$, then $Gamma, Theta, Delta tack tau ok$
+  + If $Gamma, Delta tack Psi ok$, then $Gamma, Theta, Delta tack Psi ok$
+  + If $Gamma, Delta tack tau equiv tau'$, then $Gamma, Theta, Delta tack tau equiv tau'$
+  + If $Gamma, Delta tack e : sigma$, then $Gamma, Theta, Delta tack e : sigma$
 ]
 #proof[
-  Trivial rule induction.
+  By induction on the derivation. 
 ]
 
-We can also have substitutions on scope variables.
-#definition[A _scope_ substitution $rho$ is a total mapping of scope variables to scopes that is the identity everywhere apart from some finite subset of $varset(Scope)$, denoted $dom(rho) subset.eq varset(Scope)$. We write $rng(rho)$ for $fv_Scope (overline(dom(rho)))$. A scope substitution $rho$ ensures coherence if $forall scopev in dom(rho). space Gamma tack rho(scopev) ok$. ]
+#theorem("Type Exchange")[
+  Suppose $Theta, Delta$ are soft. Then
+  + If $Gamma, Theta, Delta tack tau rigid$, then $Gamma, Delta, Theta tack tau rigid$. 
+  + If $Gamma, Theta, Delta tack tau ok$, then $Gamma, Delta, Theta tack tau ok$. 
+  + If $Gamma, Theta, Delta tack Psi ok$, then $Gamma, Delta, Theta tack Psi ok$. 
+  + If $Gamma, Theta, Delta tack tau equiv tau'$, then $Gamma, Delta, Theta tack tau equiv tau'$
+  + If $Gamma, Theta, Delta tack e : sigma$, then $Gamma, Delta, Theta tack e : sigma$
+]
+#proof[
+  By induction on the derivation. 
+]
 
-We have the same notations and extensions for _scope_ substitutions as we do for _type_ substitutions. We often informally refer to a substitution $theta$ as a type substitution $theta_Ty$ _and_ a scope substitution $theta_Scope$.
+#theorem("Type and Scope Substitution")[
+  Suppose $Gamma tack tau ok$ and $Gamma tack Psi ok$. Then 
+  + If $Gamma, alpha :: fflex, Delta tack tau' ok$, then $Gamma, Delta[alpha := tau] tack tau'[alpha := tau] ok$
+  + If $Gamma, scopev, Delta tack Psi' ok$, then $Gamma, Delta[scopev := Psi] tack Psi'[scopev := Psi] ok$
+  + If $Gamma, scopev, Delta tack tau' ok$, then $Gamma, Delta[scopev := Psi] tack tau'[scopev := Psi] ok$
+  + If $Gamma, alpha :: fflex, Delta tack sigma <= sigma'$, then $Gamma, Delta[alpha := tau] tack sigma[alpha := tau] <= sigma'[alpha := tau]$
+  + If $Gamma, scopev, Delta tack sigma <= sigma'$, then $Gamma, Delta[scopev := Psi] tack sigma[scopev := Psi] <= sigma'[scopev := Psi]$
+]
+#proof[
+  By induction on the derivation of the substitutee. 
+]
 
-Substitutions are extended to mappings from type schemes to type schemes in the typical capture avoiding way.
-We can now extend substitutions to mappings from contexts to contexts, as follows:
-$
-  theta(dot) &= dot \
-  theta(Gamma, x : sigma) &= theta(Gamma), x : theta(sigma) \
-  theta(Gamma, alpha :: f) &= cases(
-  theta(Gamma) &&"if " alpha in dom(theta),
-  theta(Gamma)\, alpha :: f &#h1&"otherwise"
-) \
-  theta(Gamma, scopev) &= cases(
-  theta(Gamma) &#h(1.8cm)&"if" scopev in dom(theta),
-  theta(Gamma)\, scopev &#h1&"otherwise"
-) \
-  theta(Gamma, eqname : tau_1 = tau_2) &= theta(Gamma), eqname : theta(tau_1) = theta(tau_2)
-$
 
+#theorem("Well-formedness Properties")[
+  Suppose $Gamma ok$. 
+  + If $Gamma tack tau rigid$, then $Gamma tack tau ok$. 
+  + If $Gamma; Psi tack tau_1 equiv tau_2$, then $Gamma tack tau_1 rigid$ and $Gamma tack tau_2 rigid$. 
+  + If $Gamma tack tau_1 equiv tau_2$, then $Gamma tack tau_1 ok$ and $Gamma tack tau_2 ok$. 
+  + If $Gamma tack sigma_1 <= sigma_2$ and $Gamma tack sigma_1 ok$, then $Gamma tack sigma_2 ok$. 
+  + If $Gamma tack e : sigma$, then $Gamma tack sigma ok$. 
+]
+#proof[
+  By induction on the derivation. 
+]
+
+#theorem("Reflexivity and Transitivity of Subsumption")[
+  + $Gamma tack sigma <= sigma$
+  + If $Gamma tack sigma_1 <= sigma_2$ and $Gamma tack sigma_2 <= sigma_3$, then $Gamma tack sigma_1 <= sigma_3$
+]
+#proof[
+  + By structural induction on $sigma$. 
+  + By induction on the sum of the _quantifiers_ of $sigma_1, sigma_2$ and $sigma_3$. 
+  #comment[I should do the proof here to be sure of the approach. ]
+]
 
 _Syntax-directed Typing Judgements._ #aml's typing judgements are not syntax-directed. It is useful to have a syntax-directed presentation to admit inversion rules solely on the structure of $e$.
 This technique is entirely standard [??] and we can show the syntax-directed presentation is sound and complete with respect to the declarative rules.
@@ -742,13 +765,42 @@ $
 $
 
 
-We write $cal(V)$ for a sequence of non-rigid generalizable variables in the context.
+We write $cal(V)$ for a sequence of non-rigid generalizable variables in the context. Rather than inlining subsumption (as is standard), we keep it explicit, 
+since each inlining would produce an explicit $equiv$-equivalence, which does not improve readability. 
 
 #lemma[_Soundness of generalization_][
   If $Gamma, cal(V) tack e : tau$ and $cal(V) disjoint Gamma$ then $Gamma tack e : tforall(cal(V)) tau$.
 ] <soundgen>
 #proof[
   Trivial proof by induction on the cardinality of $cal(V)$.
+]
+
+#lemma[
+  Given $alpha in.not textsf("eqs")(Gamma)$. 
+
+  + If $Gamma tack tau equiv tau'$ and $alpha in.not dangerous(tau')$, then $alpha in.not dangerous(tau)$
+  + If $Gamma tack sigma <= sigma'$ $alpha in.not dangerous(sigma')$, then $alpha in.not dangerous(sigma)$] <dangerous-anti-monotonicity-lemma>
+
+#proof[
+  + Induction on the derivation $Gamma tack tau equiv tau'$. 
+  
+  + 
+    We proceed by induction on the derivation of $Gamma tack sigma <= sigma'$. 
+    - *Case* (Equiv)
+    Use (1)
+
+    - *Case* ($forall$L)
+    1. Let us assume $Gamma tack sigma <= sigma'$. 
+    2. By inversion of the ($forall$L) rule, we have $sigma = tforall(beta) sigma''$ (a), $Gamma tack tau ok$ (b), and\ 
+      $Gamma tack sigma''[beta := tau] <= sigma'$ (c). 
+    3. By induction (2.c), we have $alpha in.not dangerous(sigma''[beta := tau])$
+    4. By (3), we conclude $alpha in.not dangerous(sigma'')$ and $alpha in.not dangerous(tau)$. 
+    5. By (4), $alpha in.not dangerous(tforall(beta) sigma'')$
+
+    - *Case* ($forall$R)
+    1. Let us assume $Gamma tack sigma <= sigma'$.
+    2. By inversion of the ($forall$R) rule, we have $sigma' = tforall(beta) sigma''$ (a), $beta disjoint Gamma$ (b), and $Gamma, beta :: f tack sigma <= sigma''$
+    3. By induction (2.c), we have $alpha in.not dangerous(sigma)$
 ]
 
 #theorem[_Soundness of the syntax-directed #aml typing judgements_][
@@ -1050,92 +1102,232 @@ We write $cal(V)$ for a sequence of non-rigid generalizable variables in the con
 Having established that any typing derivable in the syntax-directed #aml type system is derivable in the declarative #aml type system (and vice versa), we henceforth use the
 syntax-directed type system (implicitly).
 
+_Contextual Substitutions_. Substitutions are crucial to prove soundness and completeness of constraint generation. However, substitutions in our system pose a difficutly with respect 
+to well-formedness (which must be strictly adhered to in #aml). Instead, taking inspiration on Dunfield and Krishnaswami [??], we develop a notion of an _ordered contextual substitution_, which permit us to define the variables' scope and control the free variables and equations of their solutions. 
 
-We can extend the instantiation relation $Gamma tack sigma <= sigma'$ to contexts $Gamma <= Gamma'$ as follows
+Like a context $Gamma$, contextual substitutions $Phi$ (Figure ??) contain declarations of variables, equations and type scheme bindings. Unlike contexts, contextual substitutions contain 
+mappings from _flexible_ variables to solutions ($scopev := Psi$ and $alpha :: fflex := tau$). The well-formedness rules for contextual substitutions are given in Figure ??. We frequently consider contexts $Gamma$ as contextual substitutions. 
+
+#syntax(
+  syntax-rule(name: [Contextual \ Substitutions], 
+  $Phi, Xi ::= &dot | Phi, scopev | Phi, alpha :: f | Phi, eqname : tau = tau | Phi, x : sigma \ 
+  | &Phi, scopev := Psi | Phi, alpha ::fflex := tau$)
+)
+
+#judgement-box($Phi ok$)
 $
   #proof-tree(
     rule(
-      $dot <= dot$,
+      $dot ok$, 
       $$
     )
   )
 
-  #h1
+  #h1 
 
   #proof-tree(
     rule(
-      $Gamma, x : sigma <= Gamma', x : sigma'$,
-      $Gamma <= Gamma'$,
-      $Gamma' tack sigma <= sigma'$,
+      $Phi, scopev ok $, 
+      $Phi ok$, 
+      $scopev disjoint Phi$
     )
   )
 
-  #h1
+  #h1 
 
   #proof-tree(
     rule(
-      $Gamma, \_ <= Gamma', \_$,
-      $Gamma <= Gamma'$
+      $Phi, alpha :: f ok$, 
+      $Phi ok$, 
+      $alpha disjoint Phi$
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Phi, x : sigma ok$, 
+      $Phi ok$, 
+      $Phi tack sigma ok$, 
+      $x disjoint Phi$
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Phi, eqname : tau_1 = tau_2 ok$, 
+      $Phi ok$, 
+      $Phi tack tau_1 rigid$, 
+      $Phi tack tau_2 rigid$, 
+      $eqname disjoint Phi$
+    )
+  )
+
+  #h1 
+
+  #proof-tree(
+    rule(
+      $Phi, scopev := Psi ok $, 
+      $Phi ok $, 
+      $Phi tack Psi ok$, 
+      $scopev disjoint Phi$
+    )
+  ) 
+
+  #v1 
+
+  #proof-tree(
+    rule(
+      $Phi, alpha :: fflex := tau ok$, 
+      $Phi ok$, 
+      $Phi tack tau ok$, 
+      $alpha disjoint Phi$
     )
   )
 $
 
-#lemma[If $Gamma, alpha :: frigid tack sigma <= sigma'$ and $alpha in.not dangerous(sigma')$, then $alpha in.not dangerous(sigma)$] <dangerous-anti-monotonicity-lemma>
+The well-formedness rules for contextual substitutions enforce scoping. Consequently, circularity of substitutions is ruled out: $alpha :: fflex = beta, beta :: fflex = alpha$ is not well-formed. 
+All rules regarding judgements regarding types and schemes above may be verbatim translated for contextual substitutions. 
 
-#lemma[If $Gamma' <= Gamma$ then:
-  - If $Gamma tack tau rigid$, then $Gamma' tack tau rigid$.
-  - If $Gamma tack tau ok$, then $Gamma' tack tau ok$.
-  - If $Gamma tack Psi ok$, then $Gamma' tack Psi ok$.
-  - If $Gamma tack sigma <= sigma'$, then $Gamma' tack sigma <= sigma'$.
-] <monotonicity-lemma>
+Contextual substitutions can be applied to type and scopes. We write $[Phi]tau$ and $[Phi]Psi$ for $Phi$ applies as a substitution to $tau$ and $Psi$ respectively; this operation is defined below: 
+$
+  [Phi]alpha &= cases(
+    alpha &#h1&"if" alpha :: f in Phi, 
+    [Phi]tau &&"if" alpha :: fflex := tau in Phi
+  ) \
+  [Phi](overline(tau) tformer) &= overline([Phi]tau) tformer \ 
+  [Phi]([Psi]tau) &= [[Phi]Psi]([Phi]tau) \ \ 
 
-#theorem[_Monotonicity of #aml typing judgements_][
-  If $Gamma tack e : tau$ holds and $Gamma' <= Gamma$, then $Gamma' tack e : tau$ holds.
-] <monotonicity>
-#proof[
-  We proceed by structural induction on $e$.
-  - *Case* $x$.
-  1. Let us assume $Gamma tack x : tau$ (a) and $Gamma' <= Gamma$ (b).
-  2. By inversion, we have $x : sigma in Gamma$ (a) and $Gamma tack sigma <= tau$ (b).
-  3. By definition of $<=$ (1.b), $x : sigma' in Gamma'$ (a) and $Gamma tack sigma' <= sigma$ (b).
-  4. By transitivity of $<=$ (3.b, 2.b), $Gamma tack sigma' <= sigma$.
-  5. By @monotonicity-lemma (1.b, 2.a, 3.a), we have $Gamma' tack sigma' <= sigma$ (a) and $Gamma' tack sigma <= tau$ (b).
-  6. By transitivity of $<=$ (5.a, 5.b), we have $Gamma' tack sigma' <= tau$.
-  7. We have $Gamma' tack x : tau$ by:
-  $
-    #proof-tree(
+  [Phi]dot &= dot \ 
+  [Phi]scopev &= cases(
+    scopev &#h1&"if" scopev in Phi, 
+    [Phi]Psi &&"if" scopev := Psi in Phi 
+  ) \
+  [Phi](Psi, eqname) &= [Phi]Psi, eqname 
+$
+Subsitution can be extended to be applied to type schemes in the typical capture avoiding way. 
+
+
+_Contextual extension._ We introduce a context extension judgement $Phi --> Xi$. This judgement captures a notion of 
+that a given context may be "more solved" by adding solutions to flexible variables. A _complete_ 
+contextual substitution $Omega$ is a substitution where _every_ flexible variable has a solution. 
+Contextual extension also relates substitution with complete substitutions. 
+
+#judgement-box($Phi --> Xi$)
+$
+  #proof-tree(
     rule(
-      $Gamma' tack x : tau$,
-      rule(
-        $x : sigma' in Gamma'$,
-        $(3.a)$
-      ),
-      rule(
-        $Gamma' tack sigma' <= tau$,
-        $(6)$
-      )
+      $dot --> dot$, 
+      $$
     )
-  )
-  $
+  )  
 
-  - *Cases* $erefl$ and $()$.
-  _Trivial base cases._
+  #h1
 
-  - *Cases* $efun x -> e$, $e_1 space e_2$, $elet x = e_1 ein e_2$, $efun (etype alpha) -> e$, $(e : tau')$, and \ $ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2$.
-  _Trivial inductive cases._
-]
+  #comment[TODO] 
+$
+
+
+_Contextual application._ We can apply any contextual substitution $Phi$ to any substitution $Xi$ that it extends. The opertation of application $[Phi]Xi$ is given below. 
+For contexts $Gamma$, we require $Gamma --> Phi$. 
+
+$
+  [dot]dot &= dot \ 
+  [Phi, x : sigma](Xi, x : sigma') &= [Phi]Xi, x : [Phi]sigma &#h1&"if" [Phi]sigma = [Phi]sigma' \ 
+  [Phi, eqname : tau_1 = tau_2](Xi, eqname : tau_1 = tau_2) &= [Phi]Xi, eqname : tau_1 = tau_2 \ 
+  [Phi, alpha :: f](Xi, alpha :: f) &= [Phi]Xi, alpha :: f \
+  [Phi, alpha :: fflex := tau](Xi, alpha :: fflex) &= [Phi]Xi \ 
+  [Phi, alpha :: fflex := tau](Xi, alpha :: fflex := tau') &= [Phi]Xi &&"if" [Phi]tau = [Phi]tau' \ 
+  [Phi, scopev](Xi, scopev) &= [Phi]Xi, scopev \ 
+  [Phi, scopev = Psi](Xi, scopev) &= [Phi]Xi \
+  [Phi, scopev = Psi](Xi, scopev = Psi') &= [Phi]Xi &&"if" [Phi]Psi = [Phi]Psi' \
+  #comment[Maybe also add?] \
+  [Phi, alpha :: fflex := tau]Xi &= [Phi]Xi &&"if" alpha in.not dom(Phi) 
+$
+
+
+
 
 #lemma[
-  Let $theta$ be a coherence preserving substitution under $Gamma$.
-  + If $Gamma tack sigma <= sigma'$, then $theta(Gamma) tack theta(sigma) <= theta(sigma')$.
-  + If $Gamma tack tau ok$, then $theta(Gamma) tack theta(tau) ok$.
-  + If $Gamma tack tau rigid$ and $fv(tau) disjoint theta$, then $theta(Gamma) tack theta(tau) rigid$.
-  + If $Gamma tack Psi ok$, then $theta(Gamma) tack theta(Psi) ok$.
-  + If $alpha in.not dangerous(tau)$ and $alpha disjoint theta$, then $alpha in.not dangerous(theta(tau))$.
+  Given $Gamma --> Phi$. 
+  + If $Gamma tack tau ok$, then $[Phi]Gamma tack [Phi]tau ok$.
+  + If $Gamma tack tau rigid$, then $[Phi]Gamma tack tau rigid$.
+  + If $Gamma tack Psi ok$, then $[Phi]Gamma tack [Phi]Psi ok$. 
+  + If $Gamma tack sigma <= sigma'$, then $[Phi]Gamma tack [Phi]sigma <= [Phi]sigma'$.
 ] <subst-stable-lemma>
+#proof[
+  + We proceed by induction on $Gamma tack tau ok$
+    - *Case* (Var)
+    + Let us assume $Gamma tack alpha ok$
+    + By inversion of (Var), we have $alpha :: f in Gamma$ 
+    + Split case on $f$:
+      - $f = frigid$. 
+
+        a. By definition of extension (3), $alpha :: frigid in Phi$
+
+        b. By definition of substitution (a), $[Phi]alpha = alpha$
+
+        c. By definition of application (2, a), $alpha :: frigid in [Phi]Gamma$
+
+        d. We have $[Phi]Gamma tack [Phi]alpha ok$ by 
+        $
+          #proof-tree(
+            rule(
+              $[Phi]Gamma tack underbrace(alpha, [Phi]alpha "by (b)") ok $, 
+              rule(
+                $alpha :: frigid in [Phi]Gamma$, 
+                $(c)$
+              )
+            )
+          )
+        $ 
+
+      - $f = fflex$.
+
+        a. By definition of extension (3), we either have $alpha :: fflex in Phi$ or $alpha :: fflex := tau in Phi$
+
+        b. Split case on (a)
+
+        - $alpha :: fflex in Phi$. 
+
+        _Symmetrical to rigid case._ 
+
+        - $alpha :: fflex := tau in Phi$
+
+          i. By (2), we have $Gamma = Gamma_L, alpha :: fflex, Gamma_R$
+
+          ii. We have $Phi = Phi_L, alpha :: fflex := tau, Phi_R$. 
+
+          iii. By extension, we have $Phi_L tack tau ok$. 
+
+          iv. We have $[Phi]alpha = [Phi]tau$ 
+
+          v. 
+          $
+            Phi tack [Phi]tau ok
+          $
+          RTP $[Phi]Gamma tack [Phi]tau ok$
+          
+          Not the case e.g. 
+
+          $
+            
+            Phi = beta :: fflex, gamma :: fflex, alpha :: fflex := beta -> gamma \
+            Gamma = alpha :: fflex 
+          $
+]
+
+
+#lemma[
+  + If $alpha in.not dangerous(tau)$ and $Phi[alpha :: frigid]$, then $alpha in.not dangerous([Phi]tau)$.
+]
 
 #theorem[_#aml typing judgements are stable under substitutions_][
-  Let $theta$ be a coherence preserving substitution under $Gamma$ whose domain is disjoint with $fv_Ty (e)$. Then, if $Gamma tack e : tau$, then $theta(Gamma) tack e : theta(tau)$
+  Given $Gamma --> Phi$. 
+  If $Gamma tack e : tau$, then $[Phi]Gamma tack e : [Phi]tau$
 ] <subst-stable>
 #proof[
   We proceed by structural induction on $e$.
@@ -1376,6 +1568,80 @@ $
     )
   )
   $
+]
+
+
+_Monotonicity._ We can extend the instantiation relation $Gamma tack sigma <= sigma'$ to contexts $Gamma <= Gamma'$ as follows
+$
+  #proof-tree(
+    rule(
+      $dot <= dot$,
+      $$
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Gamma, x : sigma <= Gamma', x : sigma'$,
+      $Gamma <= Gamma'$,
+      $Gamma' tack sigma <= sigma'$,
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Gamma, \_ <= Gamma', \_$,
+      $Gamma <= Gamma'$
+    )
+  )
+$
+
+
+#lemma[If $Gamma' <= Gamma$ then:
+  - If $Gamma tack tau rigid$, then $Gamma' tack tau rigid$.
+  - If $Gamma tack tau ok$, then $Gamma' tack tau ok$.
+  - If $Gamma tack Psi ok$, then $Gamma' tack Psi ok$.
+  - If $Gamma tack sigma <= sigma'$, then $Gamma' tack sigma <= sigma'$.
+] <monotonicity-lemma>
+
+#theorem[_Monotonicity of #aml typing judgements_][
+  If $Gamma tack e : tau$ holds and $Gamma' <= Gamma$, then $Gamma' tack e : tau$ holds.
+] <monotonicity>
+#proof[
+  We proceed by structural induction on $e$.
+  - *Case* $x$.
+  1. Let us assume $Gamma tack x : tau$ (a) and $Gamma' <= Gamma$ (b).
+  2. By inversion, we have $x : sigma in Gamma$ (a) and $Gamma tack sigma <= tau$ (b).
+  3. By definition of $<=$ (1.b), $x : sigma' in Gamma'$ (a) and $Gamma tack sigma' <= sigma$ (b).
+  4. By transitivity of $<=$ (3.b, 2.b), $Gamma tack sigma' <= sigma$.
+  5. By @monotonicity-lemma (1.b, 2.a, 3.a), we have $Gamma' tack sigma' <= sigma$ (a) and $Gamma' tack sigma <= tau$ (b).
+  6. By transitivity of $<=$ (5.a, 5.b), we have $Gamma' tack sigma' <= tau$.
+  7. We have $Gamma' tack x : tau$ by:
+  $
+    #proof-tree(
+    rule(
+      $Gamma' tack x : tau$,
+      rule(
+        $x : sigma' in Gamma'$,
+        $(3.a)$
+      ),
+      rule(
+        $Gamma' tack sigma' <= tau$,
+        $(6)$
+      )
+    )
+  )
+  $
+
+  - *Cases* $erefl$ and $()$.
+  _Trivial base cases._
+
+  - *Cases* $efun x -> e$, $e_1 space e_2$, $elet x = e_1 ein e_2$, $efun (etype alpha) -> e$, $(e : tau')$, and \ $ematch (e_1 : tau_1 = tau_2) ewith erefl -> e_2$.
+  _Trivial inductive cases._
 ]
 
 == Explicit AML
