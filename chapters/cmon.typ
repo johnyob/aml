@@ -17,6 +17,7 @@
 #let Scm = textsf("Scm")
 #let Scope = textsf("Scope")
 #let Ctx = textsf("Ctx")
+#let InfCtx = textsf("InfCtx")
 #let Exp = textsf("Exp")
 #let Con = textsf("Con")
 #let EqName = textsf("EqName")

@@ -211,7 +211,9 @@ $
 $
 
 
-_Semantics._ Having defined the syntax of constraints and given an informal description of their meaning. We now formally define the semantic interpretation of constraints. We begin with a definition of a _model_ $cal(M)$.
+=== Ground Semantics
+
+Having defined the syntax of constraints and given an informal description of their meaning. We now formally define the semantic interpretation of constraints. We begin with a definition of a _model_ $cal(M)$.
 
 Our constraints are interpreted under a Herbrand universe, that is a finite tree model of _ground types_ ($gt$). We interpret _scopes_ as consistency bits ($kappa$) which are $ctrue$ if all equations in the scope are true under the current assignment. 
 
@@ -535,6 +537,227 @@ $
 $
 
 _Remark_. Notice that the definition of $safe$ refers to satisfiability in the hypothesis of an implication. It is not immediately clear that the satisfiability judgement is well-defined given that it appears in a negative position in the definition of $safe$. #comment[TODO: Show that is it well-founded on the size of $C$] 
+
+
+=== Open Semantics
+
+#syntax(
+  horizontal-spacing: 2cm, 
+  syntax-rule(
+    name: [Satisfiability Contexts],
+    $Xi in InfCtx ::= &dot
+    \ | &
+    Xi, alpha :: frigid | Xi, alpha :: fflex |-> tau
+    \ | &
+    Xi, scopev |-> Psi |
+    Gamma, eqname : tau = tau
+    \ | &
+    Gamma, x: forall overline(alpha). tau$,
+  ),
+)
+
+#judgement-box($Gamma <= Xi$)
+$
+  #proof-tree(
+    rule(
+      $Gamma <= Xi, alpha :: fflex |-> tau$,
+      $Gamma <= Xi$,
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Gamma <= Xi, scopev |-> Psi$,
+      $Gamma <= Xi$,
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Gamma, "foo" <= Xi, "foo"$,
+      $Gamma <= Xi$,
+    )
+  )
+$
+
+#judgement-box($Xi tack sigma <= forall overline(alpha).tau$)
+$
+  #proof-tree(
+    rule(
+      $Xi tack (cforall(overline(beta), C, tau')) <= forall overline(alpha).tau$,
+      $Xi tack forall overline(alpha). exists overline(beta). (C and tau = tau')$,
+    )
+  )
+$
+
+#judgement-box($Xi tack C $)
+$
+  #v2
+
+  #proof-tree(
+    rule(
+      $Xi tack ctrue$, 
+      "",
+      name: [(True)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Xi tack C_1 and C_2$,
+      $Xi tack C_1$,
+      $Xi tack C_2$,
+      name: [(Conj)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Xi tack exists alpha. C$, 
+      $Xi tack tau$,
+      $Xi, alpha :: fflex |-> gt, rho tack C$,
+      $alpha disjoint Xi$, 
+      name: [(Exists)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Xi tack exists scopev. C$, 
+      $Xi tack Psi$,
+      $Xi, scopev |-> Psi tack C$, 
+      $scopev disjoint Xi$, 
+      name: [(ExistsScope)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Xi tack forall alpha. C$, 
+      $Xi, alpha :: frigid tack C$,
+      $alpha disjoint Xi$, 
+      name: [(Forall)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Xi tack eqname : tau_1 = tau_2 ==> C$, 
+      $Xi, eqname : tau_1 = tau_2 tack C$,
+      $eqname disjoint Xi$,
+      name: [(Impl)]
+    )
+  )
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Xi tack cdef x : sigma cin C$, 
+      $Xi tack sigma <= forall overline(alpha). tau$,
+      $Xi, x : forall overline(alpha). tau tack C$, 
+      $x disjoint Xi$, 
+      name: [(Def)]
+    )
+  )
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Xi tack clet x : sigma cin C$, 
+      $Xi tack exists sigma$, 
+      $Xi tack sigma <= forall overline(alpha). tau$,
+      $Xi, x : forall overline(alpha). tau tack C$, 
+      $x disjoint Xi$,
+      name: [(Let)]
+    )
+  ) 
+
+  #v2
+
+  #proof-tree(
+    rule(
+      $Xi tack x <= tau$, 
+      $Xi(tau) in Xi(x)$, 
+      name: [(VarInst)]
+    )
+  )
+
+
+  #h1
+
+  #proof-tree(
+    rule(
+      $Xi tack sigma <= tau$, 
+      $Xi(tau) in Xi(sigma)$, 
+      name: [(SchemeInst)]
+    )
+  )
+$
+
+==== Imaginary bits from proofs of soundness and completeness.
+
+*Completeness* : if we have $Gamma tack e_1 med e_2 : tau$ and $Gamma <= Xi$,
+then there exists $Xi'$ with $Xi <= Xi$ such that $Xi' tack [| Gamma tack e_1 med e_2 : tau |]$.
+
+We have
+$
+  #proof-tree(
+    rule(
+      $Gamma tack e_1 med e_2 : tau$,
+      $Gamma tack e_1 : tau' -> tau$,
+      $Gamma tack e_2 : tau'$,
+    )
+  )
+$
+
+From $Gamma <= Xi$ we have $Xi <= Xi'$ for $Xi'$ such that $Xi' tack [|Gamma tack e_1 : tau' -> tau|]$ by induction hypothesis, and then $Xi' <= Xi''$ for $Xi''$ such that $Xi'' tack [|Gamma tack e_2 : tau'|]$ by induction hypothesis. When then build $X''' := X'', alpha_1 |-> (tau' -> tau), alpha_2 |-> tau'$, and proceed to show $Xi''' tack [| Gamma tack e_1 med e_2 : tau |]$.
+
+
+*Soundness*: if we have $Gamma <= Xi$ and $Xi tack [| Gamma tack e_1 med e_2 : tau |]$, that is
+$
+Xi tack exists alpha_1 alpha_2. (alpha_1 = alpha_2 -> tau and [|Gamma tack e_1 : alpha_1|] and [|Gamma tack e_2 : alpha_2|])
+$
+this inverts into
+$
+  #proof-tree(
+    rule(
+      $Xi tack exists alpha_1 alpha_2. (alpha_1 = alpha_2 -> tau and [|Gamma tack e_1 : alpha_1|] and [|Gamma tack e_2 : alpha_2|])$,
+      $Xi tack tau_1$,
+      $Xi tack tau_2$,
+      $Xi tack tau_1 = (tau_2 -> tau)$,
+      $Xi tack [|Gamma tack e_1 : tau_1|]$,
+      $Xi tack [|Gamma tack e_2 : tau_2|]$,
+    )
+  )
+$
+_Sketch_: From $Xi tack tau_1$ and $Gamma <= Xi$ we get $Gamma tack Xi(tau_1)$, same with $Gamma tack Xi(tau_2)$.
+From $Xi tack tau_1 = (tau_2 -> tau)$ we get $Gamma tack Xi(tau_1) = Xi(tau_2) -> Xi(tau)$ --- and in fact $Xi(tau) = tau$ as $Gamma tack tau$. By induction hypotheses we can conclude
+$
+  #proof-tree(
+    rule(
+      $Gamma tack e_1 med e_2 : tau$,
+      $Gamma tack e_1 : Xi(tau_2) -> tau$,
+      $Gamma tack e_2 : Xi(tau_2)$,
+    )
+  )
+$
+
 
 
 == Constraint Generation
