@@ -27,3 +27,9 @@
 = Solver
 
 #include "chapters/solver.typ"
+
+#pagebreak() 
+
+= Explicit AML 
+
+#include "chapters/xaml.typ"
