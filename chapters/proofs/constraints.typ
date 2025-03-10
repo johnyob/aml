@@ -495,9 +495,7 @@ We proceed by collecting auxiliary lemmas in Appendix B1. The two subsequent sub
       )
     $
 
-  + By Theorem ?? (13, 12, 11), we have $floor(Phi), x : {Phi'}alpha_1 tack e : {Phi'}alpha_2$ \
-    #comment[This theorem is monotonicity]
-
+  + By @monotonicity (13, 12, 11), we have $floor(Phi), x : {Phi'}alpha_1 tack e : {Phi'}alpha_2$ \
 
   + By (3.c, 5), we have $floor(Phi) tack {Phi}alpha equiv {Phi'}alpha_1 -> {Phi'}alpha_2$
 
@@ -871,8 +869,8 @@ We proceed by collecting auxiliary lemmas in Appendix B1. The two subsequent sub
 
   + By induction (6, 7, 3.d), we have $floor(Phi') tack e : {Phi'}beta$. By (4), we have $floor(Phi) tack e : {Phi'}beta$
 
-  + By Lemma ?? (5), we have $floor(Phi) tack tau :: ty frigid$ \
-    #comment[Requires $floor(Phi) tack forall ceil(tau) <= \_ => floor(Phi) tack forall ceil(tau) scm => floor(Phi) tack tau :: ty frigid$]
+  + By @typed-wf (5), we have $floor(Phi) tack tau :: ty frigid$ \
+    #comment[Requires $floor(Phi) tack forall ceil(tau) scm => floor(Phi) tack tau :: ty frigid$]
 
   + We have $floor(Phi) tack (e : tau) : {Phi}alpha$ by
   $
@@ -1115,8 +1113,7 @@ We proceed by collecting auxiliary lemmas in Appendix B1. The two subsequent sub
 
   + By definition of erasure, $floor(Phi\, eqname : tau_1 = tau_2) = floor(Phi), eqname : tau_1 = tau_2$. By (14, 15), we have \ $floor(Phi), eqname : tau_1 = tau_2 tack e_2 : {Phi}alpha$
 
-  + By Lemma ?? (16), we have $Gamma, eqname : tau_1 = tau_2 tack {Phi}alpha :: ty$ \
-    #comment[Requires $Gamma tack e : tau => Gamma tack tau :: ty$ ]
+  + By @typed-wf (16), we have $Gamma, eqname : tau_1 = tau_2 tack {Phi}alpha :: ty$ \
 
   + We have two cases on ${Phi}alpha$:
     - *Case* ${Phi}alpha = alpha$
