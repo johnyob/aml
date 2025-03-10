@@ -88,4 +88,4 @@
 #let fv = textsf("fv")
 #let arity = textsf("arity")
 #let consistent = textsf("consistent")
-#let dangerous = $textsf("dangerous")$
+#let eqs = textsf("eqs")
