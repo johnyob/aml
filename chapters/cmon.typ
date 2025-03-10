@@ -73,3 +73,4 @@
 // Functions
 #let fv = textsf("fv")
 #let arity = textsf("arity")
+#let eqs = textsf("eqs")
