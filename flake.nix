@@ -24,17 +24,30 @@
             inherit system;
           };
           typixLib = typix.lib.${system};
+          typstLib = pkgs.callPackage ./nix/typst.nix {};
 
           fmt = treefmt.lib.evalModule pkgs {
             projectRootFile = "flake.nix";
             programs.alejandra.enable = true;
-
             settings.global.excludes = ["result" ".direnv"];
           };
 
           report = typixLib.buildTypstProject {
-            src = typixLib.cleanTypstSource ./.;
+            src = pkgs.lib.sources.cleanSource ./.;
+            fontPaths = with pkgs; [libertinus roboto];
             typstSource = "main.typ";
+            TYPST_PACKAGE_CACHE_PATH = typstLib.typstPackagesCache [
+              {
+                name = "curryst";
+                version = "0.3.0";
+                sha256 = "sha256-i7WRPcto9kwEmF+fQyRtRsPm9eJpkXDfryiOtaZMNjY=";
+              }
+              {
+                name = "ctheorems";
+                version = "1.1.3";
+                sha256 = "sha256-LfcgS/hdCD2UIuqzq4xXuvVVBw5+WhwUUnFp+tmiVEM=";
+              }
+            ];
           };
         in {
           packages = {
