@@ -32,5 +32,10 @@
 
 #show: appendix
 
-= Proofs for @aml-meta[]
+= Proofs for @aml-meta
 #include "chapters/proofs/aml.typ"
+#pagebreak()
+
+= Proofs for @constraint-gen-meta
+#include "chapters/proofs/constraints.typ"
+#pagebreak()

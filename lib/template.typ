@@ -83,7 +83,7 @@
 }
 
 #let appendix(body) = {
-  set heading(numbering: "A", supplement: [Appendix])
+  set heading(numbering: "A1", supplement: [Appendix])
   counter(heading).update(0)
   body
 }
