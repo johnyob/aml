@@ -12,7 +12,7 @@
 
 // Sets
 #let varset(s) = $cal(V)_(#s)$
-#let disjoint = $op(\#)$ 
+#let disjoint = $op(\#)$
 
 #let Ty = textsf("Ty")
 #let TyCon = textsf("TyCon")
@@ -42,7 +42,7 @@
 #let fflex = $upright(f)$
 #let frigid = $upright(r)$
 
-// Expressions / terms 
+// Expressions / terms
 #let erefl = textsf("Refl")
 #let elet = textsf("let")
 #let ein = textsf("in")

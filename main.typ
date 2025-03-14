@@ -9,7 +9,8 @@
 
   college: [ Queens' College ],
 
-  date: datetime.today()
+  date: datetime
+    .today()
     .display("[month repr:long] [day padding:none], [year repr:full]"),
 )
 
@@ -22,7 +23,7 @@
 
 #include "chapters/constraints.typ"
 
-#pagebreak() 
+#pagebreak()
 
 = Solver
 

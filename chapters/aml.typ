@@ -13,10 +13,10 @@ _Expressions_. The syntax of expressions is as follows:
 #syntax(
   syntax-rule(
     name: [Expressions],
-    collection: $Exp$, 
-    $e$, 
-    $x | efun x -> e | e space e$, 
-    $elet x = e ein e | efun (etype alpha) -> e | (e : tau)$, 
+    collection: $Exp$,
+    $e$,
+    $x | efun x -> e | e space e$,
+    $elet x = e ein e | efun (etype alpha) -> e | (e : tau)$,
     $erefl | ematch e : tau = tau ewith erefl -> e$,
   ),
 )
@@ -29,56 +29,56 @@ _Notation_. We write $overline(e)$ for a (possible empty) set of elements ${e_1,
 _Types_. The syntax of types is as follows:
 #syntax(
   collection-rule(
-    name: [Type Variables], 
-    $varset(Ty)$, 
-    $alpha, beta, gamma, scopev, rho.alt$
+    name: [Type Variables],
+    $varset(Ty)$,
+    $alpha, beta, gamma, scopev, rho.alt$,
   ),
   collection-rule(
-    name: [Equation Names], 
+    name: [Equation Names],
     $varset(EqName)$,
-    $eqname$, 
-  ), 
-  syntax-rule(
-    name: [Type Constructors], 
-    collection: TyCon, 
-    $tformer$, 
-    $dot arrow dot | dot = dot | tunit$
+    $eqname$,
   ),
   syntax-rule(
-    name: [Types], 
-    collection: $Ty$, 
-    $tau^kappa$, 
-    $alpha^kappa | overline(tau^ty) tformer | [tau^scope] tau | emptyset^scope | tau^scope, eqname$
+    name: [Type Constructors],
+    collection: TyCon,
+    $tformer$,
+    $dot arrow dot | dot = dot | tunit$,
   ),
   syntax-rule(
-    name: [Type Schemes], 
-    collection: Scm, 
-    $sigma$, 
-    $tau | tforall(alpha :: kappa) sigma$
-  ), 
+    name: [Types],
+    collection: $Ty$,
+    $tau^kappa$,
+    $alpha^kappa | overline(tau^ty) tformer | [tau^scope] tau | emptyset^scope | tau^scope, eqname$,
+  ),
   syntax-rule(
-    name: [Kinds], 
-    collection: Kind, 
+    name: [Type Schemes],
+    collection: Scm,
+    $sigma$,
+    $tau | tforall(alpha :: kappa) sigma$,
+  ),
+  syntax-rule(
+    name: [Kinds],
+    collection: Kind,
     $kappa$,
-    $ty | scope$
+    $ty | scope$,
   ),
   syntax-rule(
-    name: [Flexibility], 
-    collection: Flex, 
-    $phi$, 
-    $fflex | frigid$
+    name: [Flexibility],
+    collection: Flex,
+    $phi$,
+    $fflex | frigid$,
   ),
   syntax-rule(
     name: [Contexts],
-    collection: Ctx, 
+    collection: Ctx,
     $Gamma$,
     $emptyset | Gamma, alpha ::^phi kappa | Gamma, eqname : tau = tau | Gamma, x: sigma$,
   ),
 )
 
 // Kinds
-Types $tau^kappa$ are _kinded_, where $kappa$ is the kind of a type $tau$, denoted by the superscript. We have the usual kind for types ($ty$), but also kinds for _scopes_ ($scope$). 
-Often the kind of a type is apparent or not relevant and most of the time we will denote the kind to reduce clutter, writing $tau$ for types and $Psi$ for scopes. For clarity, we use $alpha, beta, gamma$ to denote _type variables_ and $scopev, rho.alt$ for _scope variables_. 
+Types $tau^kappa$ are _kinded_, where $kappa$ is the kind of a type $tau$, denoted by the superscript. We have the usual kind for types ($ty$), but also kinds for _scopes_ ($scope$).
+Often the kind of a type is apparent or not relevant and most of the time we will denote the kind to reduce clutter, writing $tau$ for types and $Psi$ for scopes. For clarity, we use $alpha, beta, gamma$ to denote _type variables_ and $scopev, rho.alt$ for _scope variables_.
 
 // Types
 Types consist of type variables ($alpha$) and type constructors ($tformer$). Type constructors include functions ($arrow$), base types (such as $tunit$), and the equality withness type ($=$).
@@ -86,17 +86,17 @@ Intuiviely, a _scoped ambivalent type_ is a set of provably equivalent types. Un
 where $tau$ and $tau'$ are provably equal using the equations in $Psi$. An ambivalent type is only _coherent_ (in the context $Gamma$) if the equations in $Psi$ are in $Gamma$. Otherwise, the scope is said to have escaped the context.
 
 // Scopes
-A scope is defined by a _row_ of equation names. An scope is either empty $emptyset$, a polymorphic scope variable $scopev$, or an extension of a scope $Psi$ with an equation $eqname$, written as $Psi, eqname$. Unlike many other applications of row polymorphism, we _do_ allow duplicate equation names, meaning that $eqname, eqname$ is _well-formed_ (though not equal to the scope $eqname$). However, our use of rows is primarily to represent sets of equations and ensure _coherence_, so these duplicates do not pose a problem.  
+A scope is defined by a _row_ of equation names. An scope is either empty $emptyset$, a polymorphic scope variable $scopev$, or an extension of a scope $Psi$ with an equation $eqname$, written as $Psi, eqname$. Unlike many other applications of row polymorphism, we _do_ allow duplicate equation names, meaning that $eqname, eqname$ is _well-formed_ (though not equal to the scope $eqname$). However, our use of rows is primarily to represent sets of equations and ensure _coherence_, so these duplicates do not pose a problem.
 
 // Schemes
 Polymorphic types are defined by _type schemes_ in a mostly typical #ml fashion, generalzing over zero or more variables. However, we extend the notion of polymorphism to also quantify over _scope variables_ as well, introducing a form of _scope polymorphism_.
 
 // Contexts
-Contexts bind term variables to type schemes, introduce (polymorphic) type and scope variables, and store (named) type equations $eqname: tau = tau'$. 
+Contexts bind term variables to type schemes, introduce (polymorphic) type and scope variables, and store (named) type equations $eqname: tau = tau'$.
 Contexts are ordered and duplicates are disallowed. We write $Gamma, Gamma'$ for the concatenation of two contexts (assuming disjointness holds). We write $dom(Gamma)$ for the _domain_ of the context, which informally represents the set of type and scope variables, term variables and equation names. We often write $overline(e) disjoint Gamma$ as a shorthand for $overline(e) disjoint dom(Gamma)$.
 
-// Flexibility 
-Each type variable bound in the context is associated with a _flexibility_ makrer $phi$ which can either be _rigid_ ($frigid$) or _flexible_ ($fflex$). A variable is marked _rigid_ if introduced by an explicit quantifier $efun (etype alpha) -> e$, and _flexible_ if introduced implicitly by generalization. The distinction serves two purposes. First, it identifies explicitly introduced type variables, which we leverage to ensure annotations only make reference to such variables. The second purpose we explain below in our definition of well-formedness. Second, flexibility plays a key role in our well-formedness relation for _scoped ambivalent types_, which we elaborate on later. 
+// Flexibility
+Each type variable bound in the context is associated with a _flexibility_ makrer $phi$ which can either be _rigid_ ($frigid$) or _flexible_ ($fflex$). A variable is marked _rigid_ if introduced by an explicit quantifier $efun (etype alpha) -> e$, and _flexible_ if introduced implicitly by generalization. The distinction serves two purposes. First, it identifies explicitly introduced type variables, which we leverage to ensure annotations only make reference to such variables. The second purpose we explain below in our definition of well-formedness. Second, flexibility plays a key role in our well-formedness relation for _scoped ambivalent types_, which we elaborate on later.
 
 We assume types, scopes, and type schemes are equivalent modulo $alpha$-renaming. The definition for the set of free variables on types and schemes is standard.
 
@@ -108,53 +108,57 @@ $
 
 
 
-_Well-formedness_. Well-formedness for types, type schemes and contexts is mostly standard: ensuring types are well-kinded, prevent duplicate bindings in contexts, and enforce correct scoping of type variables. 
+_Well-formedness_. Well-formedness for types, type schemes and contexts is mostly standard: ensuring types are well-kinded, prevent duplicate bindings in contexts, and enforce correct scoping of type variables.
 
-However, our well-formedness judgements for types, written $Gamma tack tau^kappa :: kappa space phi$, additionally tracks the flexibility 
+However, our well-formedness judgements for types, written $Gamma tack tau^kappa :: kappa space phi$, additionally tracks the flexibility
 $phi$ of the type. Tracking flexibility allows us to introduce two restrictions inspired by Garrigue and Rémy's work on ambivalent types:
 1. Only equations between _rigid_ types can be introduced to the context.
-2. In a scoped ambivalent type $[Psi]tau$, the type $tau$ _under_ the scope $Psi$ must be rigid. 
-These restrictions also simply our presentation while remaining sufficient to encode OCaml's behaviour. For convenience, we write 
-$Gamma tack tau^kappa :: kappa$ when the type is flexible. The $phi_1 <= phi_2$ relation is used to weaken the flexibility of variables, permitting the following rule 
+2. In a scoped ambivalent type $[Psi]tau$, the type $tau$ _under_ the scope $Psi$ must be rigid.
+These restrictions also simply our presentation while remaining sufficient to encode OCaml's behaviour. For convenience, we write
+$Gamma tack tau^kappa :: kappa$ when the type is flexible. The $phi_1 <= phi_2$ relation is used to weaken the flexibility of variables, permitting the following rule
 to be derivable (Lemma ??):
 $
   #proof-tree(
     rule(
-      $Gamma tack tau^kappa :: kappa space phi_2$, 
-      $Gamma tack tau^kappa :: kappa space phi_1$, 
+      $Gamma tack tau^kappa :: kappa space phi_2$,
+      $Gamma tack tau^kappa :: kappa space phi_1$,
       $phi_1 <= phi_2$
     )
   )
-$ 
-
-#judgement-box($phi_1 <= phi_2$, $Gamma tack tau^kappa :: kappa space phi$, $Gamma tack sigma scm$, $Gamma ctx$)
-
 $
 
+#judgement-box(
+  $phi_1 <= phi_2$,
+  $Gamma tack tau^kappa :: kappa space phi$,
+  $Gamma tack sigma scm$,
+  $Gamma ctx$,
+)
+
+$
   #proof-tree(
     rule(
-      $phi <= phi$, 
+      $phi <= phi$,
       name: [$<=$FlexRefl]
     )
   )
 
-  #h1 
-  
+  #h1
+
 
   #proof-tree(
     rule(
-      $frigid <= fflex$, 
+      $frigid <= fflex$,
       name: [$<=$FlexWeaken]
     )
   )
 
-  #v2 
+  #v2
 
   #proof-tree(
     rule(
       $Gamma tack alpha :: kappa space phi'$,
-      $alpha ::^phi kappa in Gamma$, 
-      $phi <= phi'$, 
+      $alpha ::^phi kappa in Gamma$,
+      $phi <= phi'$,
       name: [VarWF]
     )
   )
@@ -164,7 +168,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack overline(tau) tformer :: ty phi$,
-      $forall i, space Gamma tack tau_i :: ty phi$, 
+      $forall i, space Gamma tack tau_i :: ty phi$,
       name: [TyConWF]
     )
   )
@@ -176,7 +180,7 @@ $
     rule(
       $Gamma tack [Psi] tau :: ty$,
       $Gamma tack Psi :: scope$,
-      $Gamma tack tau :: ty frigid$, 
+      $Gamma tack tau :: ty frigid$,
       name: [AmbWF]
     )
   )
@@ -186,7 +190,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack emptyset :: scope$,
-      $$, 
+      $$,
       name: [EmpScWF]
     )
   )
@@ -198,7 +202,7 @@ $
     rule(
       $Gamma tack Psi, eqname :: scope$,
       $Gamma tack Psi :: scope$,
-      $eqname in dom(Gamma)$, 
+      $eqname in dom(Gamma)$,
       name: [ConsScWF]
     )
   )
@@ -208,19 +212,19 @@ $
 
   #proof-tree(
     rule(
-      $Gamma tack tau scm$, 
-      $Gamma tack tau :: ty$, 
+      $Gamma tack tau scm$,
+      $Gamma tack tau :: ty$,
       name: [ScmTy]
     )
   )
 
-  #v2 
+  #v2
 
   #proof-tree(
     rule(
       $Gamma tack tforall(alpha :: kappa) sigma scm$,
       $Gamma, alpha ::^phi kappa tack sigma scm$,
-      $alpha disjoint Gamma$, 
+      $alpha disjoint Gamma$,
       name: [Scm$forall$]
     )
   )
@@ -231,7 +235,7 @@ $
   #proof-tree(
    rule(
       $emptyset ctx$,
-      $$, 
+      $$,
       name: [EmpCtx]
     )
   )
@@ -242,12 +246,12 @@ $
     rule(
       $Gamma, alpha ::^phi kappa ctx$,
       $Gamma ctx$,
-      $alpha disjoint Gamma$, 
+      $alpha disjoint Gamma$,
       name: [TyVarCtx]
     )
   )
 
-  #h1 
+  #h1
 
 
   #proof-tree(
@@ -255,12 +259,12 @@ $
       $Gamma, x : sigma ctx$,
       $Gamma ctx$,
       $Gamma tack sigma scm$,
-      $x disjoint Gamma$, 
+      $x disjoint Gamma$,
       name: [VarCtx]
     )
   )
 
-  #v2 
+  #v2
 
   #proof-tree(
     rule(
@@ -268,19 +272,19 @@ $
       $Gamma ctx$,
       $Gamma tack tau_1 :: ty frigid$,
       $Gamma tack tau_2 :: ty frigid$,
-      $eqname disjoint Gamma$, 
+      $eqname disjoint Gamma$,
       name: [EqCtx]
     )
   )
 $
 
 
-_Type Equivalence._ Types have an associated equivalence relation, written $Gamma tack tau_1 equiv tau_2 space [Psi]$, read: _under the context $Gamma$, $tau_1$ and $tau_2$ are equivalent in the scope $Psi$_. We refer to $Psi$ as the _support_ in the equivalence relation. We often write $Gamma tack tau_1 equiv tau_2$ if the support is empty. 
+_Type Equivalence._ Types have an associated equivalence relation, written $Gamma tack tau_1 equiv tau_2 space [Psi]$, read: _under the context $Gamma$, $tau_1$ and $tau_2$ are equivalent in the scope $Psi$_. We refer to $Psi$ as the _support_ in the equivalence relation. We often write $Gamma tack tau_1 equiv tau_2$ if the support is empty.
 
-To prove equivalences, we can rely on equalities referenced in $Psi$ as well as standard rules such as reflexivity, symmetry, transitivity, congruence, and decomposition. Type constructors are injective. Additionally, we introduce three rules associated with scoped ambivalent types. 
+To prove equivalences, we can rely on equalities referenced in $Psi$ as well as standard rules such as reflexivity, symmetry, transitivity, congruence, and decomposition. Type constructors are injective. Additionally, we introduce three rules associated with scoped ambivalent types.
 
-The first rule permits us to prove equivalences between scoped types using the equations in their scopes. 
-The latter two rules are axioms: distributivity and $M$. Distributivity allows the movement of scopes within a type, which is cruicial for ensuring that eliminators can be applied correctly. However, as explained above, we do not permit the concatentation of scopes with distributivity. Axiom $M$ allows us to remove trivial scopes.  
+The first rule permits us to prove equivalences between scoped types using the equations in their scopes.
+The latter two rules are axioms: distributivity and $M$. Distributivity allows the movement of scopes within a type, which is cruicial for ensuring that eliminators can be applied correctly. However, as explained above, we do not permit the concatentation of scopes with distributivity. Axiom $M$ allows us to remove trivial scopes.
 
 
 #judgement-box($Gamma tack tau_1 equiv tau_2 space [Psi]$)
@@ -288,7 +292,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack tau equiv tau space [Psi]$,
-      $Gamma tack tau :: ty$, 
+      $Gamma tack tau :: ty$,
       name: [$equiv$Refl]
     )
   )
@@ -298,7 +302,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack tau_1 equiv tau_2 space [Psi]$,
-      $Gamma tack tau_2 equiv tau_1 space [Psi]$, 
+      $Gamma tack tau_2 equiv tau_1 space [Psi]$,
       name: [$equiv$Sym]
     )
   )
@@ -309,7 +313,7 @@ $
     rule(
       $Gamma tack tau_1 equiv tau_3 space [Psi]$,
       $Gamma tack tau_1 equiv tau_2 space [Psi]$,
-      $Gamma tack tau_2 equiv tau_3 space [Psi]$, 
+      $Gamma tack tau_2 equiv tau_3 space [Psi]$,
       name: [$equiv$Trans]
     )
   )
@@ -320,7 +324,7 @@ $
     rule(
       $Gamma tack tau_1 equiv tau_2 space [Psi]$,
       $eqname : tau_1 = tau_2 in Gamma$,
-      $eqname in Psi$, 
+      $eqname in Psi$,
       name: [$equiv$Use]
     )
   )
@@ -330,7 +334,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack overline(tau_1) tformer equiv overline(tau_2) tformer space [Psi]$,
-      $forall i, space Gamma tack tau_(1i)  equiv tau_(2i) space [Psi]$, 
+      $forall i, space Gamma tack tau_(1i)  equiv tau_(2i) space [Psi]$,
       name: [$equiv$Cong]
     )
   )
@@ -340,38 +344,38 @@ $
   #proof-tree(
     rule(
       $Gamma tack tau_(1i) equiv tau_(2i) space [Psi]$,
-      $Gamma tack overline(tau_1) tformer equiv overline(tau_2) tformer space [Psi]$, 
+      $Gamma tack overline(tau_1) tformer equiv overline(tau_2) tformer space [Psi]$,
       name: [$equiv$Inj]
     )
-  ) 
+  )
 
-  #v2 
+  #v2
 
   #proof-tree(
     rule(
-      $Gamma tack [Psi_1]tau_1 equiv [Psi_1]tau_2 space [Psi_2]$, 
-      $Gamma tack tau_1 equiv tau_2 space [Psi_1]$, 
+      $Gamma tack [Psi_1]tau_1 equiv [Psi_1]tau_2 space [Psi_2]$,
+      $Gamma tack tau_1 equiv tau_2 space [Psi_1]$,
       name: [$equiv$Amb]
     )
   )
 
-  #h1 
+  #h1
 
   #proof-tree(
     rule(
-      $Gamma tack [Psi_1](overline(tau) tformer) equiv overline([Psi_1]tau) tformer space [Psi_2]$, 
-      $arity(tformer) > 0$, 
+      $Gamma tack [Psi_1](overline(tau) tformer) equiv overline([Psi_1]tau) tformer space [Psi_2]$,
+      $arity(tformer) > 0$,
       name: [$equiv$Dist]
     )
   )
 
 
-  #v2 
+  #v2
 
   #proof-tree(
     rule(
-      $Gamma tack [emptyset]tau equiv tau space [Psi]$, 
-      $Gamma tack tau :: ty frigid$, 
+      $Gamma tack [emptyset]tau equiv tau space [Psi]$,
+      $Gamma tack tau :: ty frigid$,
       name: [$equiv$$M$]
     )
   )
@@ -387,7 +391,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack x : sigma$,
-      $x : sigma in Gamma$, 
+      $x : sigma in Gamma$,
       name: [Var]
     )
   )
@@ -398,7 +402,7 @@ $
     rule(
       $Gamma tack efun x -> e : tau_1 -> tau_2$,
       $Gamma, x : tau_1 tack e : tau_2$,
-      $Gamma tack tau_1 :: ty$, 
+      $Gamma tack tau_1 :: ty$,
       name: [Fun]
     )
   )
@@ -421,7 +425,7 @@ $
     rule(
       $Gamma tack elet x = e_1 ein e_2 : sigma_2$,
       $Gamma tack e_1 : sigma_1$,
-      $Gamma, x : sigma_1 tack e_2 : sigma_2$, 
+      $Gamma, x : sigma_1 tack e_2 : sigma_2$,
       name: [Let]
     )
   )
@@ -444,7 +448,7 @@ $
       $Gamma tack efun (etype alpha) -> e : tforall(alpha :: ty) sigma$,
       $Gamma, alpha ::^frigid ty tack e : sigma$,
       $alpha disjoint Gamma$,
-      $alpha in.not dangerous(sigma)$, 
+      $alpha in.not dangerous(sigma)$,
       name: [TyFun]
     )
   )
@@ -461,7 +465,7 @@ $
     )
   )
 
-  #h1 
+  #h1
 
 
   #proof-tree(
@@ -492,7 +496,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack erefl : tforall(alpha :: ty) alpha = alpha$,
-      $$, 
+      $$,
       name: [Refl]
     )
   )
@@ -502,11 +506,10 @@ $
   #proof-tree(
     rule(
       $Gamma tack () : tforall(scopev :: scope) [scopev]tunit$,
-      $$, 
+      $$,
       name: [Unit]
     )
   )
-
 $
 
 _Variables_. Variables $(x)$ are typed as usual. If a variable has a polymorphic type, the standard #ml instantiation rule applies. The instantiation relation $Gamma tack sigma <= sigma'$ is defined as follows:
@@ -514,7 +517,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack tau <= tau'$,
-      $Gamma tack tau equiv tau'$, 
+      $Gamma tack tau equiv tau'$,
       name: [$<=equiv$]
     )
   )
@@ -525,7 +528,7 @@ $
     rule(
       $Gamma tack tforall(alpha :: kappa) sigma <= sigma'$,
       $Gamma tack tau^kappa :: kappa$,
-      $Gamma tack sigma[alpha := tau^kappa] <= sigma'$, 
+      $Gamma tack sigma[alpha := tau^kappa] <= sigma'$,
       name: [$<=forall$L]
     )
   )
@@ -549,7 +552,7 @@ $
   rule(
     $Gamma tack e : tau'$,
     $Gamma tack e : tau$,
-    $Gamma tack tau equiv tau'$, 
+    $Gamma tack tau equiv tau'$,
     name: [Equiv]
   )
 )
@@ -563,14 +566,14 @@ If the return type fails to satisfy this condition, then we say the _equation ($
 _Annotations_. Annotations represent an explicit loss of sharing of scopes between types. This loss of sharing of scopes permits us to eliminate ambivalence in our return type, thereby preventing scope escapes. The types $tau_1, tau_2$ need not be identical to $tau$ but must instead be _consistent instances_ of $tau$ with differing scopes. We express this by defining a _scope insertion_ function $ceil(tau)$ for rigid types, which produces a context of scope variables $cal(S)$ and a type $tau'$ with scopes inserted at _leaves_ of the type. Scopes at inner nodes can be inferred via the distributivity of scopes.
 #let ceilret(a, b) = $#a triangle.r.small #b$
 #[
-#show math.equation: set align(end)
-$
-  ceil(alpha ) &= ceilret(scopev, [scopev]alpha) &&"fresh" scopev \
+  #show math.equation: set align(end)
+  $
+    ceil(alpha ) &= ceilret(scopev, [scopev]alpha) &&"fresh" scopev \
   ceil(tformer ) &= ceilret(scopev, [scopev]tformer) &&"fresh" scopev \
   ceil(overline(tau) tformer ) &= ceilret(#[$cal(S)_1, ..., cal(S)_n$], overline(tau')) tformer &#h(2.3cm)&"where" ceil(tau_i ) = ceilret(cal(S)_i, tau'_i)
-$
+  $
 ]
-We write $forall ceil(tau )$ for $tforall(cal(S)) tau'$ where $ceil(tau ) = ceilret(cal(S), tau')$. This type scheme describes a set of instances that are equivalent to $tau$ after erasing their scopes. We say such instances are _consistent instances_ of $tau$. 
+We write $forall ceil(tau )$ for $tforall(cal(S)) tau'$ where $ceil(tau ) = ceilret(cal(S), tau')$. This type scheme describes a set of instances that are equivalent to $tau$ after erasing their scopes. We say such instances are _consistent instances_ of $tau$.
 
 
 _Functions_. Function applications $e_1 space e_2$ are standard and oblivious to scopes.
@@ -632,10 +635,10 @@ $
 
 == Metatheory <aml-meta>
 
-_Syntax-directed Typing Judgements._ As a first step towards type inference, we now present a _syntax-directed_ variant of #aml in Figure ??. It is useful to have a syntax-directed presentation to admit inversion rules solely on the structure of $e$. This technique is entirely standard [??]. 
+_Syntax-directed Typing Judgements._ As a first step towards type inference, we now present a _syntax-directed_ variant of #aml in Figure ??. It is useful to have a syntax-directed presentation to admit inversion rules solely on the structure of $e$. This technique is entirely standard [??].
 
-Effectively, we removed the (Sub) and (Gen) rules, and always apply instantiation for variables and primitives and always generalize at let-bindings. 
-We write $cal(V)$ for a sequence of non-rigid generalizable variables $overline(alpha ::^fflex kappa)$ used in (Let). Rather than inlining subsumption (as is standard), we keep it explicit, since each inlining would produce an explicit $equiv$-equivalence, which does not improve readability. 
+Effectively, we removed the (Sub) and (Gen) rules, and always apply instantiation for variables and primitives and always generalize at let-bindings.
+We write $cal(V)$ for a sequence of non-rigid generalizable variables $overline(alpha ::^fflex kappa)$ used in (Let). Rather than inlining subsumption (as is standard), we keep it explicit, since each inlining would produce an explicit $equiv$-equivalence, which does not improve readability.
 
 #judgement-box($Gamma sdtack e : tau$)
 
@@ -644,7 +647,7 @@ $
     rule(
       $Gamma sdtack x : tau$,
       $x : sigma in Gamma$,
-      $Gamma tack sigma <= tau$, 
+      $Gamma tack sigma <= tau$,
       name: [Var]
     )
   )
@@ -655,7 +658,7 @@ $
     rule(
       $Gamma sdtack efun x -> e : tau_1 -> tau_2$,
       $Gamma, x : tau_1 sdtack e : tau_2$,
-      $Gamma sdtack tau_1 :: ty$, 
+      $Gamma sdtack tau_1 :: ty$,
       name: [Fun]
     )
   )
@@ -679,7 +682,7 @@ $
       $Gamma sdtack elet x = e_1 ein e_2 : tau_2$,
       $Gamma, cal(V) sdtack e_1 : tau_1$,
       $cal(V) disjoint Gamma$,
-      $Gamma, x : forall cal(V).tau_1 sdtack e_2 : tau_2$, 
+      $Gamma, x : forall cal(V).tau_1 sdtack e_2 : tau_2$,
       name: [Let]
     )
   )
@@ -692,7 +695,7 @@ $
       $Gamma, alpha ::^frigid ty sdtack e : tau$,
       $alpha disjoint Gamma$,
       $alpha in.not dangerous(tau)$,
-      $Gamma tack tforall(alpha :: ty) tau <= tau'$, 
+      $Gamma tack tforall(alpha :: ty) tau <= tau'$,
       name: [TyFun]
     )
   )
@@ -713,7 +716,7 @@ $
   #proof-tree(
     rule(
       $Gamma sdtack erefl : tau$,
-      $Gamma tack tforall(alpha :: ty) alpha = alpha <=  tau$, 
+      $Gamma tack tforall(alpha :: ty) alpha = alpha <=  tau$,
       name: [Refl]
     )
   )
@@ -723,7 +726,7 @@ $
   #proof-tree(
     rule(
       $Gamma sdtack () : tau$,
-      $Gamma tack tforall(scopev :: scope) [scopev]tunit <= tau$, 
+      $Gamma tack tforall(scopev :: scope) [scopev]tunit <= tau$,
       name: [Unit]
     )
   )
@@ -743,8 +746,8 @@ $
 $
 
 
-The syntax-directed presentation is sound and complete with respect to the declarative rules. 
-The statements are almost entirely standard with the exception that our statement for completeness must explicitly reason about a set of generalizable variables.  
+The syntax-directed presentation is sound and complete with respect to the declarative rules.
+The statements are almost entirely standard with the exception that our statement for completeness must explicitly reason about a set of generalizable variables.
 
 #theorem[_Soundness of the syntax-directed #aml typing judgements_][
   When $Gamma sdtack e : tau$ then we also have $Gamma tack e : tau$.
@@ -757,15 +760,15 @@ The statements are almost entirely standard with the exception that our statemen
 Having established that any typing derivable in the syntax-directed #aml type system is derivable in the declarative #aml type system (and vice versa), we henceforth use the
 syntax-directed type system (implicitly).
 
-#aml also enjoys several standard properties, including weakening, exchange, substitution, and well-formedness. 
+#aml also enjoys several standard properties, including weakening, exchange, substitution, and well-formedness.
 
-_Monotonicity._ This property asserts that strengthening the type of a free term variable by making it more general preserves well-typedness. We draw the reader's attention to this property because Garrigue and Rémy identify it as key feature of their calculus. 
+_Monotonicity._ This property asserts that strengthening the type of a free term variable by making it more general preserves well-typedness. We draw the reader's attention to this property because Garrigue and Rémy identify it as key feature of their calculus.
 
 
 #definition[
-We can extend the instantiation relation $Gamma tack sigma <= sigma'$ to contexts $Gamma <= Gamma'$ as follows
-$
-  #proof-tree(
+  We can extend the instantiation relation $Gamma tack sigma <= sigma'$ to contexts $Gamma <= Gamma'$ as follows
+  $
+    #proof-tree(
     rule(
       $dot <= dot$,
       $$
@@ -790,14 +793,14 @@ $
       $Gamma <= Gamma'$
     )
   )
-$
+  $
 ]
 
 
 
 #theorem[_Monotonicity of #aml typing judgements_][
   If $Gamma tack e : tau$ holds and $Gamma' <= Gamma$, then $Gamma' tack e : tau$ holds.
-] 
+]
 
 
-Detailed proofs of these properties are provided in the appendix. 
+Detailed proofs of these properties are provided in the appendix.
