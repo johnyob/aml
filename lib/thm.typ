@@ -9,8 +9,8 @@
   ],
 )
 #let lemma = thmbox(
-  "lemma", 
-  "Lemma", 
+  "lemma",
+  "Lemma",
   bodyfmt: body => [
     #set align(left)
     #body
@@ -26,7 +26,11 @@
     #body
   ],
 )
-#let definition = thmbox("definition", "Definition", inset: (x: 1.2em, top: 1em))
+#let definition = thmbox(
+  "definition",
+  "Definition",
+  inset: (x: 1.2em, top: 1em),
+)
 
 #let example = thmplain("example", "Example").with(numbering: none)
 #let proof = thmproof("proof", "Proof")

@@ -1,17 +1,12 @@
 #let cam-notes(
   // The title
   title: "My Report",
-
   // Subtitle (optional)
   subtitle: none,
-
   // Author name
   author: "Alistair O'Brien",
-
   date: none,
-
   college: "Queens' College",
-
   body,
 ) = {
   // Set the document's basic properties.
