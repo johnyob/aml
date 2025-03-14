@@ -29,6 +29,7 @@
           fmt = treefmt.lib.evalModule pkgs {
             projectRootFile = "flake.nix";
             programs.alejandra.enable = true;
+            programs.typstyle.enable = true;
             settings.global.excludes = ["result" ".direnv"];
           };
 
