@@ -40,12 +40,12 @@
               {
                 name = "curryst";
                 version = "0.3.0";
-                sha256 = "sha256-i7WRPcto9kwEmF+fQyRtRsPm9eJpkXDfryiOtaZMNjY=";
+                sha256 = "sha256-TyA4XV57N1YDDVncy/sI06FWqAR+3mbqHisKmkRjqZE=";
               }
               {
                 name = "ctheorems";
                 version = "1.1.3";
-                sha256 = "sha256-LfcgS/hdCD2UIuqzq4xXuvVVBw5+WhwUUnFp+tmiVEM=";
+                sha256 = "sha256-hzWgHWt88VLofnhaq4DB5JAGaWgt1rCDP4O9nknZzVY=";
               }
             ];
           };
