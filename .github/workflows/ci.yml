@@ -14,6 +14,6 @@ jobs:
       - uses: cachix/install-nix-action@v30
       - run: nix --version
       - name: Format
-        run: nix --accept-flake-config fmt -- --fail-on-change
+        run: nix --accept-flake-config fmt -- --ci
       - name: Build 
         run: nix --accept-flake-config build -j auto
