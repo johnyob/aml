@@ -38,9 +38,10 @@
 #let tforall(alpha) = $forall #alpha. space$
 #let scopev = $sigma.alt$
 
-
+// Flexibility
 #let fflex = $upright(f)$
 #let frigid = $upright(r)$
+#let fbind(f) = $op(scripts(::)^#f)$
 
 // Expressions / terms
 #let erefl = textsf("Refl")

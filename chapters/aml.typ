@@ -72,7 +72,7 @@ _Types_. The syntax of types is as follows:
     name: [Contexts],
     collection: Ctx,
     $Gamma$,
-    $emptyset | Gamma, alpha ::^phi kappa | Gamma, eqname : tau = tau | Gamma, x: sigma$,
+    $emptyset | Gamma, alpha fbind(phi) kappa | Gamma, eqname : tau = tau | Gamma, x: sigma$,
   ),
 )
 
@@ -157,7 +157,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack alpha :: kappa space phi'$,
-      $alpha ::^phi kappa in Gamma$,
+      $alpha fbind(phi) kappa in Gamma$,
       $phi <= phi'$,
       name: [VarWF]
     )
@@ -223,7 +223,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack tforall(alpha :: kappa) sigma scm$,
-      $Gamma, alpha ::^phi kappa tack sigma scm$,
+      $Gamma, alpha fbind(phi) kappa tack sigma scm$,
       $alpha disjoint Gamma$,
       name: [Scm$forall$]
     )
@@ -244,7 +244,7 @@ $
 
   #proof-tree(
     rule(
-      $Gamma, alpha ::^phi kappa ctx$,
+      $Gamma, alpha fbind(phi) kappa ctx$,
       $Gamma ctx$,
       $alpha disjoint Gamma$,
       name: [TyVarCtx]
@@ -435,7 +435,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack e : tforall(alpha :: kappa) sigma$,
-      $Gamma, alpha ::^fflex kappa tack e : sigma$,
+      $Gamma, alpha fbind(fflex) kappa tack e : sigma$,
       $alpha disjoint Gamma$,
       name: [Gen]
     )
@@ -446,7 +446,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack efun (etype alpha) -> e : tforall(alpha :: ty) sigma$,
-      $Gamma, alpha ::^frigid ty tack e : sigma$,
+      $Gamma, alpha fbind(frigid) ty tack e : sigma$,
       $alpha disjoint Gamma$,
       $alpha in.not dangerous(sigma)$,
       name: [TyFun]
@@ -538,7 +538,7 @@ $
   #proof-tree(
     rule(
       $Gamma tack sigma <= tforall(alpha :: kappa) sigma'$,
-      $Gamma, alpha ::^fflex kappa tack sigma <= sigma'$,
+      $Gamma, alpha fbind(fflex) kappa tack sigma <= sigma'$,
       $alpha disjoint Gamma$,
       name: [$<=forall$R]
     )
@@ -638,7 +638,7 @@ $
 _Syntax-directed Typing Judgements._ As a first step towards type inference, we now present a _syntax-directed_ variant of #aml in Figure ??. It is useful to have a syntax-directed presentation to admit inversion rules solely on the structure of $e$. This technique is entirely standard [??].
 
 Effectively, we removed the (Sub) and (Gen) rules, and always apply instantiation for variables and primitives and always generalize at let-bindings.
-We write $cal(V)$ for a sequence of non-rigid generalizable variables $overline(alpha ::^fflex kappa)$ used in (Let). Rather than inlining subsumption (as is standard), we keep it explicit, since each inlining would produce an explicit $equiv$-equivalence, which does not improve readability.
+We write $cal(V)$ for a sequence of non-rigid generalizable variables $overline(alpha fbind(fflex) kappa)$ used in (Let). Rather than inlining subsumption (as is standard), we keep it explicit, since each inlining would produce an explicit $equiv$-equivalence, which does not improve readability.
 
 #judgement-box($Gamma sdtack e : tau$)
 
@@ -692,7 +692,7 @@ $
   #proof-tree(
     rule(
       $Gamma sdtack efun (etype alpha) -> e : tau'$,
-      $Gamma, alpha ::^frigid ty sdtack e : tau$,
+      $Gamma, alpha fbind(frigid) ty sdtack e : tau$,
       $alpha disjoint Gamma$,
       $alpha in.not dangerous(tau)$,
       $Gamma tack tforall(alpha :: ty) tau <= tau'$,
