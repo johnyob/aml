@@ -403,6 +403,7 @@ $
       $Gamma tack efun x -> e : tau_1 -> tau_2$,
       $Gamma, x : tau_1 tack e : tau_2$,
       $Gamma tack tau_1 :: ty$,
+      $x disjoint Gamma$,
       name: [Fun]
     )
   )
@@ -426,6 +427,7 @@ $
       $Gamma tack elet x = e_1 ein e_2 : sigma_2$,
       $Gamma tack e_1 : sigma_1$,
       $Gamma, x : sigma_1 tack e_2 : sigma_2$,
+      $x disjoint Gamma$,
       name: [Let]
     )
   )
@@ -659,6 +661,7 @@ $
       $Gamma sdtack efun x -> e : tau_1 -> tau_2$,
       $Gamma, x : tau_1 sdtack e : tau_2$,
       $Gamma sdtack tau_1 :: ty$,
+      $x disjoint Gamma$,
       name: [Fun]
     )
   )
@@ -681,7 +684,7 @@ $
     rule(
       $Gamma sdtack elet x = e_1 ein e_2 : tau_2$,
       $Gamma, cal(V) sdtack e_1 : tau_1$,
-      $cal(V) disjoint Gamma$,
+      $x, cal(V) disjoint Gamma$,
       $Gamma, x : forall cal(V).tau_1 sdtack e_2 : tau_2$,
       name: [Let]
     )
