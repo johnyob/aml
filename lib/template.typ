@@ -71,7 +71,7 @@
   set align(left)
 
   // Table of contents.
-  outline(depth: 3, indent: true, target: heading)
+  outline(depth: 3, target: heading)
 
   // Main body.
   set page(numbering: "1", number-align: center)
