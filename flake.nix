@@ -62,6 +62,8 @@
             packages = with pkgs; [
               alejandra
               lefthook
+              typst
+              tinymist
               typstyle
             ];
           };

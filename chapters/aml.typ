@@ -24,7 +24,7 @@ _Expressions_. The syntax of expressions is as follows:
 #aml extends #ml expressions, variables, functions and let expressions are standard. #aml introduces an explicit universal quantifier $efun (etype alpha) -> e$, equivalent to System #textsf("F")'s $Lambda alpha. e$. The constructor $erefl$ has the type $tau = tau$. The $ematch e : tau_1 = tau_2 ewith erefl -> e'$ construct introduces the type-level equality in $e'$ as a _local constraint_ using the proof $e$.
 
 
-_Notation_. We write $overline(e)$ for a (possible empty) set of elements ${e_1, ..., e_n}$ and a (possibly empty) sequence $e_1, ..., e_n$. The interpretation of whether $overline(e)$ is a set or a sequence is often implicit. We write $overline(e_1) disjoint overline(e_2)$ as a shorthand for when $overline(e_1) sect overline(e_2) = emptyset$. We write $overline(e_1), overline(e_2)$ as the union or concatenation (depending on the interpretation) of $overline(e_1)$ and $overline(e_2)$. We often write $e$ for the singleton set (or sequence).
+_Notation_. We write $overline(e)$ for a (possible empty) set of elements ${e_1, ..., e_n}$ and a (possibly empty) sequence $e_1, ..., e_n$. The interpretation of whether $overline(e)$ is a set or a sequence is often implicit. We write $overline(e_1) disjoint overline(e_2)$ as a shorthand for when $overline(e_1) inter overline(e_2) = emptyset$. We write $overline(e_1), overline(e_2)$ as the union or concatenation (depending on the interpretation) of $overline(e_1)$ and $overline(e_2)$. We often write $e$ for the singleton set (or sequence).
 
 _Types_. The syntax of types is as follows:
 #syntax(
