@@ -33,10 +33,31 @@
         "type": "github"
       }
     },
+    "ocaml-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1742787740,
+        "narHash": "sha256-6q1v+TN+xFYr/+OgQxZ2fiPmnxatzlDGwjMJZiI4kag=",
+        "owner": "nix-ocaml",
+        "repo": "nix-overlays",
+        "rev": "dbe213c8d7b52b0995c549fc7a2123fef3af85d6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-ocaml",
+        "repo": "nix-overlays",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs",
+        "ocaml-overlay": "ocaml-overlay",
         "treefmt": "treefmt",
         "typix": "typix"
       }

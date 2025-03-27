@@ -14,6 +14,11 @@
       url = "github:loqusion/typix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    ocaml-overlay = {
+      url = "github:nix-ocaml/nix-overlays";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs:
@@ -22,6 +27,10 @@
         system: let
           pkgs = import nixpkgs {
             inherit system;
+            overlays = [
+              ocaml-overlay.overlays.default
+              (import ./nix/overlay.nix)
+            ];
           };
           typixLib = typix.lib.${system};
           typstLib = pkgs.callPackage ./nix/typst.nix {};
@@ -29,12 +38,18 @@
           fmt = treefmt.lib.evalModule pkgs {
             projectRootFile = "flake.nix";
             programs.alejandra.enable = true;
+            programs.ocamlformat = {
+              enable = true;
+              package = pkgs.ocamlformat_0_26_2;
+            };
             programs.typstyle.enable = true;
-            settings.global.excludes = ["result" ".direnv"];
+            settings.global.excludes = ["result" ".direnv" "_build"];
           };
 
+          aml = pkgs.callPackage ./nix/aml.nix {};
+
           report = typixLib.buildTypstProject {
-            src = pkgs.lib.sources.cleanSource ./.;
+            src = pkgs.lib.sources.cleanSource ./report;
             fontPaths = with pkgs; [libertinus roboto];
             typstSource = "main.typ";
             TYPST_PACKAGE_CACHE_PATH = typstLib.typstPackagesCache [
@@ -52,19 +67,31 @@
           };
         in {
           packages = {
-            inherit report;
+            inherit aml report;
             default = report;
           };
 
           formatter = fmt.config.build.wrapper;
           devShells.default = typixLib.devShell {
+            inputsFrom = [aml];
             fontPaths = with pkgs; [libertinus roboto];
             packages = with pkgs; [
+              # Formatters
               alejandra
-              lefthook
+              ocamlformat_0_26_2
+
+              # Typst
               typst
               tinymist
               typstyle
+
+              # OCaml dev env
+              ocamlPackages.utop
+              ocamlPackages.ocaml-lsp
+              ocamlPackages.merlin
+              ocamlPackages.merlin-lib
+              ocamlPackages.ocaml
+              ocamlPackages.dune
             ];
           };
         }
