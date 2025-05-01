@@ -1,0 +1,6 @@
+(library
+ (name test_parser)
+ (libraries core fmt grace aml.ast aml.source aml.parser)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane)))

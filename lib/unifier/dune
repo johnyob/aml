@@ -1,0 +1,6 @@
+(library
+ (name aml_unifier)
+ (public_name aml.unifier)
+ (libraries core aml.std)
+ (preprocess
+  (pps ppx_jane)))

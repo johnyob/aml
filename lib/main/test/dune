@@ -1,0 +1,6 @@
+(library
+ (name test_main)
+ (libraries core dedent aml.log aml.source aml.main)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane)))

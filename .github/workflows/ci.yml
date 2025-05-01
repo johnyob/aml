@@ -19,5 +19,5 @@ jobs:
       - run: nix --version
       - name: Format
         run: nix --accept-flake-config fmt -- --ci
-      - name: Build 
-        run: nix --accept-flake-config build -j auto
+      - name: Build and Check
+        run: nix --accept-flake-config flake check -j auto

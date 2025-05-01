@@ -1,0 +1,6 @@
+(library
+ (name aml_error)
+ (public_name aml.error)
+ (libraries core grace grace.ansi_renderer fmt aml.ast)
+ (preprocess
+  (pps ppx_jane)))

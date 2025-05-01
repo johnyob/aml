@@ -1,0 +1,6 @@
+(library
+ (name aml_std)
+ (public_name aml.std)
+ (libraries core)
+ (preprocess
+  (pps ppx_jane)))

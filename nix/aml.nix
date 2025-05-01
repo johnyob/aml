@@ -8,4 +8,17 @@ with ocamlPackages;
     version = "dev";
 
     src = lib.cleanSource ../.;
+
+    nativeBuildInputs = [
+      menhir
+    ];
+
+    propagatedBuildInputs = [
+      core
+      core_unix
+      ppx_jane
+      grace
+      menhir
+      fmt
+    ];
   }
