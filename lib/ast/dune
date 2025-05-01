@@ -1,0 +1,6 @@
+(library
+ (name aml_ast)
+ (public_name aml.ast)
+ (libraries core grace)
+ (preprocess
+  (pps ppx_jane)))

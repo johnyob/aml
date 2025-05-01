@@ -1,0 +1,6 @@
+(library
+ (name aml_main)
+ (public_name aml.main)
+ (libraries core grace aml.ast aml.parser aml.constraint aml.type_checker)
+ (preprocess
+  (pps ppx_jane)))

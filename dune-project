@@ -1,5 +1,7 @@
 (lang dune 3.10)
 
+(using menhir 2.1)
+
 (name aml)
 
 (source
@@ -15,4 +17,4 @@
 
 (package
  (name aml)
- (depends ocaml dune))
+ (depends ocaml dune core core_unix ppx_jane fmt menhir grace))

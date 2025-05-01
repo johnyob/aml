@@ -43,7 +43,7 @@
               package = pkgs.ocamlformat_0_26_2;
             };
             programs.typstyle.enable = true;
-            settings.global.excludes = ["result" ".direnv" "_build"];
+            settings.global.excludes = ["result" ".direnv" "_build" "examples/*"];
           };
 
           aml = pkgs.callPackage ./nix/aml.nix {};
@@ -68,10 +68,19 @@
         in {
           packages = {
             inherit aml report;
-            default = report;
+            default = aml;
+          };
+
+          checks = {
+            inherit report;
+            aml = self.packages.${system}.aml.overrideAttrs (old: {
+              name = "check-${old.name}";
+              doCheck = true;
+            });
           };
 
           formatter = fmt.config.build.wrapper;
+
           devShells.default = typixLib.devShell {
             inputsFrom = [aml];
             fontPaths = with pkgs; [libertinus roboto];

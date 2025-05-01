@@ -1,0 +1,13 @@
+(library
+ (name aml_type_checker)
+ (public_name aml.type_checker)
+ (libraries
+  core
+  grace
+  aml.std
+  aml.ast
+  aml.constraint
+  aml.constraint_solver
+  aml.error)
+ (preprocess
+  (pps ppx_jane)))

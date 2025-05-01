@@ -1,0 +1,6 @@
+(library
+ (name aml_log)
+ (public_name aml.log)
+ (libraries core core_unix.time_unix)
+ (preprocess
+  (pps ppx_jane)))

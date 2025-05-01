@@ -1,3 +1,6 @@
 (executable
  (public_name aml)
- (name aml))
+ (name aml)
+ (libraries core core_unix.command_unix aml.main aml.log)
+ (preprocess
+  (pps ppx_jane)))

@@ -13,6 +13,21 @@ with prev; {
             logs = prev.logs.overrideAttrs (_: {
               buildPhase = "${topkg.run} build --with-lwt true --with-cmdliner true --with-fmt true --with-js_of_ocaml false";
             });
+
+            grace = buildDunePackage rec {
+              pname = "grace";
+              version = "0.2.0";
+
+              minimalOCamlVersion = "4.14";
+
+              src = fetchFromGitHub {
+                owner = "johnyob";
+                repo = "grace";
+                rev = "275adda398834612b804283fe9548708e570bfdf";
+                hash = "sha256-2zBYXrNb/rVWjEBmmQfW+rAWs/qhx6nMhAdJEwIdhHQ=";
+              };
+              propagatedBuildInputs = [core ppx_jane fmt dedent iter core_unix uutf ppx_optcomp];
+            };
           }
       );
     });

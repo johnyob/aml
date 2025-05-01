@@ -1,0 +1,6 @@
+(library
+ (name aml_constraint)
+ (public_name aml.constraint)
+ (libraries core aml.std aml.error grace)
+ (preprocess
+  (pps ppx_jane)))
