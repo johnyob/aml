@@ -255,8 +255,12 @@ struct
     in
     (* [impose_scopes ~scope_row as rts] imposes the structure [[scope_row]rt_i] on 
        every variable [a_i]. *)
-    let impose_scopes ~scope_row as' rts =
-      match List.iter2 as' rts ~f:(fun a rt -> a =~- Box (scope_row, rt)) with
+    let impose_scopes ~scope_set as' rts =
+      match
+        List.iter2 as' rts ~f:(fun a rt ->
+          let scope_row = create (Scope (Scope_row.open_ scope_set)) in
+          a =~- Box (scope_row, rt))
+      with
       | Ok () -> ()
       | Unequal_lengths -> assert false
     in
@@ -281,7 +285,7 @@ struct
         scr =~- Scope (Scope_row.open_ scopes);
         (* Every child [a_i] of the structure [s] must be a scoped 
            ambivalent type of the form [[scr]rt_i] *)
-        impose_scopes ~scope_row:scr as' rts);
+        impose_scopes ~scope_set:scopes as' rts);
       (* We favour [Structure] over [Box] because [Structure] is more 
          intuitive for programmers. *)
       Structure s
@@ -313,11 +317,10 @@ struct
           Head { head = hs1; arity = List.length as1 }
           ==? Head { head = hs2; arity = List.length as2 }
         in
-        let scr = create (Scope (Scope_row.open_ scopes)) in
         (* Every child of [s1] (and [s2] resp.) must be a scoped ambivalent 
            type of the form [[scr]rt1_i] ([[scr]rt2_i] resp.) *)
-        impose_scopes ~scope_row:scr as1 rts1;
-        impose_scopes ~scope_row:scr as2 rts2;
+        impose_scopes ~scope_set:scopes as1 rts1;
+        impose_scopes ~scope_set:scopes as2 rts2;
         (* Pick arbitrary structure, could alternatively be [t2] *)
         t1)
     | Scope _, (Structure _ | Box _) | (Structure _ | Box _), Scope _ ->
